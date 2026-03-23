@@ -118,7 +118,7 @@ export function Chat() {
             <span className='sr-only'>Toggle Sidebar</span>
           </Button>
           <div className='ms-auto flex shrink-0 items-center gap-1'>
-          <Button
+            <Button
               variant='ghost'
               size='icon'
               className='size-8'
@@ -136,7 +136,7 @@ export function Chat() {
             >
               <SearchIcon className='size-4' />
             </Button>
-            
+
             <ThemeSwitch />
           </div>
         </header>

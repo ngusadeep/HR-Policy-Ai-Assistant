@@ -11,7 +11,7 @@ const appsSearchSchema = z.object({
   sort: z.enum(['asc', 'desc']).optional().catch(undefined),
 })
 
-export const Route = createFileRoute('/_authenticated/(dashboard)/apps/')({
+export const Route = createFileRoute('/_authenticated/dashboard/apps/')({
   validateSearch: appsSearchSchema,
   component: Apps,
 })

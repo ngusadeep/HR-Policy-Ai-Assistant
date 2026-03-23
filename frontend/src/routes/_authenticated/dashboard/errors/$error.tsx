@@ -11,7 +11,7 @@ import { NotFoundError } from '@/features/errors/not-found-error'
 import { UnauthorisedError } from '@/features/errors/unauthorized-error'
 
 export const Route = createFileRoute(
-  '/_authenticated/(dashboard)/errors/$error'
+  '/_authenticated/dashboard/errors/$error'
 )({
   component: RouteComponent,
 })

@@ -17,7 +17,7 @@ const taskSearchSchema = z.object({
   filter: z.string().optional().catch(''),
 })
 
-export const Route = createFileRoute('/_authenticated/(dashboard)/tasks/')({
+export const Route = createFileRoute('/_authenticated/dashboard/tasks/')({
   validateSearch: taskSearchSchema,
   component: Tasks,
 })

@@ -54,17 +54,17 @@ export const sidebarData: SidebarData = {
       items: [
         {
           title: 'Dashboard',
-          url: '/',
+          url: '/dashboard',
           icon: LayoutDashboard,
         },
         {
           title: 'Tasks',
-          url: '/tasks',
+          url: '/dashboard/tasks',
           icon: ListTodo,
         },
         {
           title: 'Apps',
-          url: '/apps',
+          url: '/dashboard/apps',
           icon: Package,
         },
         {
@@ -74,7 +74,7 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'Users',
-          url: '/users',
+          url: '/dashboard/users',
           icon: Users,
         },
         {
@@ -168,34 +168,34 @@ export const sidebarData: SidebarData = {
           items: [
             {
               title: 'Profile',
-              url: '/settings',
+              url: '/dashboard/settings',
               icon: UserCog,
             },
             {
               title: 'Account',
-              url: '/settings/account',
+              url: '/dashboard/settings/account',
               icon: Wrench,
             },
             {
               title: 'Appearance',
-              url: '/settings/appearance',
+              url: '/dashboard/settings/appearance',
               icon: Palette,
             },
             {
               title: 'Notifications',
-              url: '/settings/notifications',
+              url: '/dashboard/settings/notifications',
               icon: Bell,
             },
             {
               title: 'Display',
-              url: '/settings/display',
+              url: '/dashboard/settings/display',
               icon: Monitor,
             },
           ],
         },
         {
           title: 'Help Center',
-          url: '/help-center',
+          url: '/dashboard/help-center',
           icon: HelpCircle,
         },
       ],

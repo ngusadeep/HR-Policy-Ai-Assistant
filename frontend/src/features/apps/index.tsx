@@ -19,7 +19,7 @@ import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { apps } from './data/apps'
 
-const route = getRouteApi('/_authenticated/(dashboard)/apps/')
+const route = getRouteApi('/_authenticated/dashboard/apps/')
 
 type AppType = 'all' | 'connected' | 'notConnected'
 
