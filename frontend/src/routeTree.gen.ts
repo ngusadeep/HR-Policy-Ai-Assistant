@@ -34,6 +34,7 @@ import { Route as AuthenticatedDashboardUsersIndexRouteImport } from './routes/_
 import { Route as AuthenticatedDashboardTasksIndexRouteImport } from './routes/_authenticated/dashboard/tasks/index'
 import { Route as AuthenticatedDashboardSettingsIndexRouteImport } from './routes/_authenticated/dashboard/settings/index'
 import { Route as AuthenticatedDashboardHelpCenterIndexRouteImport } from './routes/_authenticated/dashboard/help-center/index'
+import { Route as AuthenticatedDashboardDocumentsIndexRouteImport } from './routes/_authenticated/dashboard/documents/index'
 import { Route as AuthenticatedDashboardAppsIndexRouteImport } from './routes/_authenticated/dashboard/apps/index'
 import { Route as AuthenticatedDashboardSettingsNotificationsRouteImport } from './routes/_authenticated/dashboard/settings/notifications'
 import { Route as AuthenticatedDashboardSettingsDisplayRouteImport } from './routes/_authenticated/dashboard/settings/display'
@@ -171,6 +172,12 @@ const AuthenticatedDashboardHelpCenterIndexRoute =
     path: '/help-center/',
     getParentRoute: () => AuthenticatedDashboardRouteRoute,
   } as any)
+const AuthenticatedDashboardDocumentsIndexRoute =
+  AuthenticatedDashboardDocumentsIndexRouteImport.update({
+    id: '/documents/',
+    path: '/documents/',
+    getParentRoute: () => AuthenticatedDashboardRouteRoute,
+  } as any)
 const AuthenticatedDashboardAppsIndexRoute =
   AuthenticatedDashboardAppsIndexRouteImport.update({
     id: '/apps/',
@@ -233,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/display': typeof AuthenticatedDashboardSettingsDisplayRoute
   '/dashboard/settings/notifications': typeof AuthenticatedDashboardSettingsNotificationsRoute
   '/dashboard/apps': typeof AuthenticatedDashboardAppsIndexRoute
+  '/dashboard/documents': typeof AuthenticatedDashboardDocumentsIndexRoute
   '/dashboard/help-center': typeof AuthenticatedDashboardHelpCenterIndexRoute
   '/dashboard/settings/': typeof AuthenticatedDashboardSettingsIndexRoute
   '/dashboard/tasks': typeof AuthenticatedDashboardTasksIndexRoute
@@ -261,6 +269,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/display': typeof AuthenticatedDashboardSettingsDisplayRoute
   '/dashboard/settings/notifications': typeof AuthenticatedDashboardSettingsNotificationsRoute
   '/dashboard/apps': typeof AuthenticatedDashboardAppsIndexRoute
+  '/dashboard/documents': typeof AuthenticatedDashboardDocumentsIndexRoute
   '/dashboard/help-center': typeof AuthenticatedDashboardHelpCenterIndexRoute
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsIndexRoute
   '/dashboard/tasks': typeof AuthenticatedDashboardTasksIndexRoute
@@ -295,6 +304,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/settings/display': typeof AuthenticatedDashboardSettingsDisplayRoute
   '/_authenticated/dashboard/settings/notifications': typeof AuthenticatedDashboardSettingsNotificationsRoute
   '/_authenticated/dashboard/apps/': typeof AuthenticatedDashboardAppsIndexRoute
+  '/_authenticated/dashboard/documents/': typeof AuthenticatedDashboardDocumentsIndexRoute
   '/_authenticated/dashboard/help-center/': typeof AuthenticatedDashboardHelpCenterIndexRoute
   '/_authenticated/dashboard/settings/': typeof AuthenticatedDashboardSettingsIndexRoute
   '/_authenticated/dashboard/tasks/': typeof AuthenticatedDashboardTasksIndexRoute
@@ -327,6 +337,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/display'
     | '/dashboard/settings/notifications'
     | '/dashboard/apps'
+    | '/dashboard/documents'
     | '/dashboard/help-center'
     | '/dashboard/settings/'
     | '/dashboard/tasks'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/display'
     | '/dashboard/settings/notifications'
     | '/dashboard/apps'
+    | '/dashboard/documents'
     | '/dashboard/help-center'
     | '/dashboard/settings'
     | '/dashboard/tasks'
@@ -388,6 +400,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/settings/display'
     | '/_authenticated/dashboard/settings/notifications'
     | '/_authenticated/dashboard/apps/'
+    | '/_authenticated/dashboard/documents/'
     | '/_authenticated/dashboard/help-center/'
     | '/_authenticated/dashboard/settings/'
     | '/_authenticated/dashboard/tasks/'
@@ -586,6 +599,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardHelpCenterIndexRouteImport
       parentRoute: typeof AuthenticatedDashboardRouteRoute
     }
+    '/_authenticated/dashboard/documents/': {
+      id: '/_authenticated/dashboard/documents/'
+      path: '/documents'
+      fullPath: '/dashboard/documents'
+      preLoaderRoute: typeof AuthenticatedDashboardDocumentsIndexRouteImport
+      parentRoute: typeof AuthenticatedDashboardRouteRoute
+    }
     '/_authenticated/dashboard/apps/': {
       id: '/_authenticated/dashboard/apps/'
       path: '/apps'
@@ -663,6 +683,7 @@ interface AuthenticatedDashboardRouteRouteChildren {
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedDashboardErrorsErrorRoute: typeof AuthenticatedDashboardErrorsErrorRoute
   AuthenticatedDashboardAppsIndexRoute: typeof AuthenticatedDashboardAppsIndexRoute
+  AuthenticatedDashboardDocumentsIndexRoute: typeof AuthenticatedDashboardDocumentsIndexRoute
   AuthenticatedDashboardHelpCenterIndexRoute: typeof AuthenticatedDashboardHelpCenterIndexRoute
   AuthenticatedDashboardTasksIndexRoute: typeof AuthenticatedDashboardTasksIndexRoute
   AuthenticatedDashboardUsersIndexRoute: typeof AuthenticatedDashboardUsersIndexRoute
@@ -676,6 +697,8 @@ const AuthenticatedDashboardRouteRouteChildren: AuthenticatedDashboardRouteRoute
     AuthenticatedDashboardErrorsErrorRoute:
       AuthenticatedDashboardErrorsErrorRoute,
     AuthenticatedDashboardAppsIndexRoute: AuthenticatedDashboardAppsIndexRoute,
+    AuthenticatedDashboardDocumentsIndexRoute:
+      AuthenticatedDashboardDocumentsIndexRoute,
     AuthenticatedDashboardHelpCenterIndexRoute:
       AuthenticatedDashboardHelpCenterIndexRoute,
     AuthenticatedDashboardTasksIndexRoute:

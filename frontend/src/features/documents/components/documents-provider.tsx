@@ -1,0 +1,32 @@
+import React, { useState } from 'react'
+import useDialogState from '@/hooks/use-dialog-state'
+import { type PolicyDocument } from '../data/schema'
+
+type DocumentsDialogType = 'upload' | 'delete'
+
+type DocumentsContextType = {
+  open: DocumentsDialogType | null
+  setOpen: (str: DocumentsDialogType | null) => void
+  currentRow: PolicyDocument | null
+  setCurrentRow: React.Dispatch<React.SetStateAction<PolicyDocument | null>>
+}
+
+const DocumentsContext = React.createContext<DocumentsContextType | null>(null)
+
+export function DocumentsProvider({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useDialogState<DocumentsDialogType>(null)
+  const [currentRow, setCurrentRow] = useState<PolicyDocument | null>(null)
+
+  return (
+    <DocumentsContext value={{ open, setOpen, currentRow, setCurrentRow }}>
+      {children}
+    </DocumentsContext>
+  )
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useDocuments = () => {
+  const ctx = React.useContext(DocumentsContext)
+  if (!ctx) throw new Error('useDocuments must be used within <DocumentsProvider>')
+  return ctx
+}
