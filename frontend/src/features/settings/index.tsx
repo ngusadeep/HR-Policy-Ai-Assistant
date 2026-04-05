@@ -1,5 +1,5 @@
 import { Outlet } from '@tanstack/react-router'
-import { Monitor, Palette, Wrench, UserCog } from 'lucide-react'
+import { Palette, Wrench, UserCog } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
@@ -33,11 +33,6 @@ export function Settings() {
       title: 'Appearance',
       href: '/dashboard/settings/appearance',
       icon: <Palette size={18} />,
-    },
-    {
-      title: 'Display',
-      href: '/dashboard/settings/display',
-      icon: <Monitor size={18} />,
     },
   ]
 

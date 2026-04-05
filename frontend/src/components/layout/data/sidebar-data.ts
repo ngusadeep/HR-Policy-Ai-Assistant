@@ -7,8 +7,6 @@ import {
   UserCog,
   Wrench,
   Palette,
-  Bell,
-  Monitor,
   Building2,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
@@ -68,16 +66,6 @@ export const sidebarData: SidebarData = {
               title: 'Appearance',
               url: '/dashboard/settings/appearance',
               icon: Palette,
-            },
-            {
-              title: 'Notifications',
-              url: '/dashboard/settings/notifications',
-              icon: Bell,
-            },
-            {
-              title: 'Display',
-              url: '/dashboard/settings/display',
-              icon: Monitor,
             },
           ],
         },
