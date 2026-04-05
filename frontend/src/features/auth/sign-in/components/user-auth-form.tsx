@@ -2,11 +2,14 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, Link } from '@tanstack/react-router'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth-store'
-import { sleep, cn } from '@/lib/utils'
+import { loginApi } from '@/features/auth/api/auth-api'
+import { handleServerError } from '@/lib/handle-server-error'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -18,7 +21,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
-import { Link } from '@tanstack/react-router'
 
 const formSchema = z.object({
   email: z.email({
@@ -44,41 +46,24 @@ export function UserAuthForm({ className, redirectTo, ...props }: UserAuthFormPr
     defaultValues: { email: '', password: '' },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
+    try {
+      const response = await loginApi({ email: data.email, password: data.password })
+      auth.setUserAndToken(response.user, response.access_token)
 
-    toast.promise(sleep(1500), {
-      loading: 'Signing in...',
-      success: () => {
-        setIsLoading(false)
-
-        // Mock: treat @admin emails as admin, everything else as user
-        // Replace this block with a real API call when backend is ready
-        const isAdmin = data.email.includes('admin')
-        const mockUser = {
-          id: 'mock-001',
-          firstName: isAdmin ? 'HR' : 'Employee',
-          lastName: isAdmin ? 'Admin' : 'User',
-          email: data.email,
-          role: isAdmin ? ('admin' as const) : ('user' as const),
-          status: 'active' as const,
-          exp: Date.now() + 24 * 60 * 60 * 1000,
-        }
-
-        auth.setUser(mockUser)
-        auth.setAccessToken('mock-access-token')
-
-        // Role-based redirect
-        const destination = redirectTo ?? (isAdmin ? '/dashboard' : '/chat')
-        navigate({ to: destination, replace: true })
-
-        return `Welcome back, ${mockUser.firstName}!`
-      },
-      error: () => {
-        setIsLoading(false)
-        return 'Invalid email or password.'
-      },
-    })
+      const destination = redirectTo ?? (response.user.role === 'admin' ? '/dashboard' : '/chat')
+      toast.success(`Welcome back, ${response.user.firstName}!`)
+      navigate({ to: destination, replace: true })
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        toast.error('Invalid email or password.')
+      } else {
+        handleServerError(err)
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

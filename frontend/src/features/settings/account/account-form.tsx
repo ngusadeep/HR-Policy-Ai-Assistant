@@ -1,8 +1,11 @@
-import { z } from 'zod'
-import { useForm } from 'react-hook-form'
-import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { useState } from 'react'
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { Loader2, ChevronsUpDown, Check } from 'lucide-react'
+import { toast } from 'sonner'
+import { useNavigate } from '@tanstack/react-router'
+import { useAuthStore } from '@/stores/auth-store'
+import { handleServerError } from '@/lib/handle-server-error'
+import { fetchActiveUsersApi, transferAdminRoleApi } from '../api/settings-api'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,160 +17,152 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { DatePicker } from '@/components/date-picker'
-
-const languages = [
-  { label: 'English', value: 'en' },
-  { label: 'French', value: 'fr' },
-  { label: 'German', value: 'de' },
-  { label: 'Spanish', value: 'es' },
-  { label: 'Portuguese', value: 'pt' },
-  { label: 'Russian', value: 'ru' },
-  { label: 'Japanese', value: 'ja' },
-  { label: 'Korean', value: 'ko' },
-  { label: 'Chinese', value: 'zh' },
-] as const
-
-const accountFormSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Please enter your name.')
-    .min(2, 'Name must be at least 2 characters.')
-    .max(30, 'Name must not be longer than 30 characters.'),
-  dob: z.date('Please select your date of birth.'),
-  language: z.string('Please select a language.'),
-})
-
-type AccountFormValues = z.infer<typeof accountFormSchema>
-
-// This can come from your database or API.
-const defaultValues: Partial<AccountFormValues> = {
-  name: '',
-}
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 export function AccountForm() {
-  const form = useForm<AccountFormValues>({
-    resolver: zodResolver(accountFormSchema),
-    defaultValues,
+  const { auth } = useAuthStore()
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ['active-non-admin-users'],
+    queryFn: fetchActiveUsersApi,
   })
 
-  function onSubmit(data: AccountFormValues) {
-    showSubmittedData(data)
+  const transferMutation = useMutation({
+    mutationFn: (targetId: number) => transferAdminRoleApi(targetId),
+    onSuccess: (res) => {
+      toast.success(res.message)
+      // Current user is now a regular User — reset role in store
+      if (auth.user) {
+        auth.setUser({ ...auth.user, role: 'user' })
+      }
+      navigate({ to: '/chat' })
+    },
+    onError: (err) => handleServerError(err),
+  })
+
+  const selected = users.find((u) => u.id === selectedId)
+
+  function handleTransfer() {
+    if (selectedId) transferMutation.mutate(selectedId)
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-        <FormField
-          control={form.control}
-          name='name'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder='Your name' {...field} />
-              </FormControl>
-              <FormDescription>
-                This is the name that will be displayed on your profile and in
-                emails.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name='dob'
-          render={({ field }) => (
-            <FormItem className='flex flex-col'>
-              <FormLabel>Date of birth</FormLabel>
-              <DatePicker selected={field.value} onSelect={field.onChange} />
-              <FormDescription>
-                Your date of birth is used to calculate your age.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name='language'
-          render={({ field }) => (
-            <FormItem className='flex flex-col'>
-              <FormLabel>Language</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant='outline'
-                      role='combobox'
-                      className={cn(
-                        'w-[200px] justify-between',
-                        !field.value && 'text-muted-foreground'
-                      )}
+    <div className='space-y-6'>
+      <div>
+        <h3 className='text-lg font-medium'>Transfer Admin Role</h3>
+        <p className='mt-1 text-sm text-muted-foreground'>
+          Assign the admin role to another active employee. You will become a regular user
+          and lose access to the admin dashboard immediately.
+        </p>
+      </div>
+
+      <div className='space-y-3'>
+        <p className='text-sm font-medium'>Select employee</p>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant='outline'
+              role='combobox'
+              aria-expanded={open}
+              className='w-full justify-between'
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className='flex items-center gap-2 text-muted-foreground'>
+                  <Loader2 className='h-4 w-4 animate-spin' /> Loading employees...
+                </span>
+              ) : selected ? (
+                `${selected.firstName} ${selected.lastName} — ${selected.title}`
+              ) : (
+                <span className='text-muted-foreground'>Search for an employee...</span>
+              )}
+              <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+            <Command>
+              <CommandInput placeholder='Search by name or title...' />
+              <CommandList>
+                <CommandEmpty>No active employees found.</CommandEmpty>
+                <CommandGroup>
+                  {users.map((u) => (
+                    <CommandItem
+                      key={u.id}
+                      value={`${u.firstName} ${u.lastName} ${u.email} ${u.title}`}
+                      onSelect={() => {
+                        setSelectedId(u.id)
+                        setOpen(false)
+                      }}
                     >
-                      {field.value
-                        ? languages.find(
-                            (language) => language.value === field.value
-                          )?.label
-                        : 'Select language'}
-                      <CaretSortIcon className='ms-2 h-4 w-4 shrink-0 opacity-50' />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className='w-[200px] p-0'>
-                  <Command>
-                    <CommandInput placeholder='Search language...' />
-                    <CommandEmpty>No language found.</CommandEmpty>
-                    <CommandGroup>
-                      <CommandList>
-                        {languages.map((language) => (
-                          <CommandItem
-                            value={language.label}
-                            key={language.value}
-                            onSelect={() => {
-                              form.setValue('language', language.value)
-                            }}
-                          >
-                            <CheckIcon
-                              className={cn(
-                                'size-4',
-                                language.value === field.value
-                                  ? 'opacity-100'
-                                  : 'opacity-0'
-                              )}
-                            />
-                            {language.label}
-                          </CommandItem>
-                        ))}
-                      </CommandList>
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <FormDescription>
-                This is the language that will be used in the dashboard.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type='submit'>Update account</Button>
-      </form>
-    </Form>
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          selectedId === u.id ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      <div className='flex flex-col'>
+                        <span>{u.firstName} {u.lastName}</span>
+                        <span className='text-xs text-muted-foreground'>{u.title} · {u.email}</span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        <Button
+          variant='destructive'
+          disabled={!selectedId || transferMutation.isPending}
+          onClick={() => setConfirmOpen(true)}
+        >
+          {transferMutation.isPending && <Loader2 className='animate-spin' />}
+          Transfer admin role
+        </Button>
+      </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Transfer admin role?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to transfer the admin role to{' '}
+              <span className='font-semibold text-foreground'>
+                {selected?.firstName} {selected?.lastName}
+              </span>
+              . You will immediately lose admin access and be redirected to the user dashboard.
+              This cannot be undone without the new admin's help.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              onClick={handleTransfer}
+            >
+              Yes, transfer role
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )
 }

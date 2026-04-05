@@ -4,8 +4,15 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { sleep } from '@/lib/utils'
+import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
+import { handleServerError } from '@/lib/handle-server-error'
+import {
+  updateProfileApi,
+  changePasswordApi,
+  deleteAccountApi,
+} from '../api/settings-api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -23,6 +30,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { PasswordInput } from '@/components/password-input'
 import { Separator } from '@/components/ui/separator'
 
@@ -52,8 +70,8 @@ type PasswordValues = z.infer<typeof passwordSchema>
 
 export function ProfileForm() {
   const { auth } = useAuthStore()
-  const [profileLoading, setProfileLoading] = useState(false)
-  const [passwordLoading, setPasswordLoading] = useState(false)
+  const navigate = useNavigate()
+  const [deleteConfirm, setDeleteConfirm] = useState('')
 
   const profileForm = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
@@ -71,31 +89,44 @@ export function ProfileForm() {
     defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
   })
 
+  const profileMutation = useMutation({
+    mutationFn: updateProfileApi,
+    onSuccess: (updatedUser) => {
+      auth.setUser(updatedUser)
+      toast.success('Profile updated successfully.')
+    },
+    onError: (err) => handleServerError(err),
+  })
+
+  const passwordMutation = useMutation({
+    mutationFn: changePasswordApi,
+    onSuccess: () => {
+      toast.success('Password updated successfully.')
+      passwordForm.reset()
+    },
+    onError: (err) => handleServerError(err),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteAccountApi,
+    onSuccess: () => {
+      toast.success('Your account has been deleted.')
+      auth.reset()
+      navigate({ to: '/sign-in' })
+    },
+    onError: (err) => handleServerError(err),
+  })
+
   function onProfileSubmit(data: ProfileValues) {
-    setProfileLoading(true)
-    toast.promise(sleep(1200), {
-      loading: 'Saving profile...',
-      success: () => {
-        setProfileLoading(false)
-        auth.setUser(auth.user ? { ...auth.user, ...data } : null)
-        return 'Profile updated successfully.'
-      },
-      error: () => { setProfileLoading(false); return 'Failed to update profile.' },
-    })
+    profileMutation.mutate(data)
   }
 
-  function onPasswordSubmit(_data: PasswordValues) {
-    setPasswordLoading(true)
-    toast.promise(sleep(1200), {
-      loading: 'Updating password...',
-      success: () => {
-        setPasswordLoading(false)
-        passwordForm.reset()
-        return 'Password updated successfully.'
-      },
-      error: () => { setPasswordLoading(false); return 'Failed to update password.' },
-    })
+  function onPasswordSubmit(data: PasswordValues) {
+    passwordMutation.mutate(data)
   }
+
+  const isAdmin = auth.isAdmin()
+  const deleteEmailMatch = deleteConfirm === auth.user?.email
 
   return (
     <div className='space-y-8'>
@@ -173,8 +204,8 @@ export function ProfileForm() {
             />
           </div>
 
-          <Button type='submit' disabled={profileLoading}>
-            {profileLoading && <Loader2 className='animate-spin' />}
+          <Button type='submit' disabled={profileMutation.isPending}>
+            {profileMutation.isPending && <Loader2 className='animate-spin' />}
             Save changes
           </Button>
         </form>
@@ -220,13 +251,57 @@ export function ProfileForm() {
                 </FormItem>
               )}
             />
-            <Button type='submit' disabled={passwordLoading}>
-              {passwordLoading && <Loader2 className='animate-spin' />}
+            <Button type='submit' disabled={passwordMutation.isPending}>
+              {passwordMutation.isPending && <Loader2 className='animate-spin' />}
               Update password
             </Button>
           </form>
         </Form>
       </div>
+
+      {/* Delete account — non-admins only */}
+      {!isAdmin && (
+        <>
+          <Separator />
+          <div>
+            <h3 className='mb-1 text-sm font-medium text-destructive'>Delete account</h3>
+            <p className='mb-4 text-sm text-muted-foreground'>
+              This will permanently delete your account. This action cannot be undone.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant='destructive'>Delete my account</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action is permanent and cannot be reversed. Type your email{' '}
+                    <span className='font-semibold text-foreground'>{auth.user?.email}</span>{' '}
+                    below to confirm.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input
+                  placeholder='Enter your email to confirm'
+                  value={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.value)}
+                />
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setDeleteConfirm('')}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={!deleteEmailMatch || deleteMutation.isPending}
+                    onClick={() => deleteMutation.mutate()}
+                    className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                  >
+                    {deleteMutation.isPending && <Loader2 className='animate-spin' />}
+                    Delete account
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </>
+      )}
     </div>
   )
 }

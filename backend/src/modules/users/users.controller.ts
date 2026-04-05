@@ -11,6 +11,7 @@ import {
 import { UsersService } from 'src/modules/users/users.service';
 import { CreateUserDto } from 'src/modules/users/dto/create-user.dto';
 import { UpdateUserDto } from 'src/modules/users/dto/update-user.dto';
+import { UpdateUserStatusDto } from 'src/modules/users/dto/update-user-status.dto';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -59,6 +60,17 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     return this.usersService.update(userId, updateUserDto);
+  }
+
+  @ApiOperation({ summary: 'Update user status (approve / suspend)' })
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @Patch(':userId/status')
+  updateStatus(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body() dto: UpdateUserStatusDto,
+  ): Promise<UserResponseDto> {
+    return this.usersService.updateStatus(userId, dto);
   }
 
   @ApiOperation({ summary: 'Delete a user by id' })

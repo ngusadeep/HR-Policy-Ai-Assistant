@@ -1,18 +1,15 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
   IsEnum,
-  IsInt,
   IsNotEmpty,
-  IsOptional,
   IsString,
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { UserGender } from 'src/modules/users/entities/user.entity';
 
-export class CreateUserDto {
+export class RegisterDto {
   @ApiProperty({ example: 'John', maxLength: 100 })
   @IsNotEmpty()
   @IsString()
@@ -25,7 +22,7 @@ export class CreateUserDto {
   @MaxLength(100)
   lastName: string;
 
-  @ApiProperty({ example: 'john@example.com', maxLength: 100 })
+  @ApiProperty({ example: 'john@example.com' })
   @IsNotEmpty()
   @IsEmail()
   @MaxLength(100)
@@ -42,16 +39,10 @@ export class CreateUserDto {
   @MaxLength(150)
   title: string;
 
-  @ApiProperty({ example: 'StrongP@ss1', maxLength: 255 })
+  @ApiProperty({ example: 'StrongP@ss1', minLength: 7 })
   @IsNotEmpty()
   @IsString()
   @MinLength(7)
   @MaxLength(255)
   password: string;
-
-  @ApiPropertyOptional({ example: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  roleId?: number;
 }

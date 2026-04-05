@@ -10,16 +10,42 @@ import { Role } from 'src/modules/roles/entities/role.entity';
 import { BasicEntity } from 'src/common/entities/base.entity';
 import * as crypto from 'crypto';
 
+export enum UserGender {
+  MALE = 'male',
+  FEMALE = 'female',
+  PREFER_NOT_TO_SAY = 'prefer_not_to_say',
+}
+
+export enum UserStatus {
+  ACTIVE = 'active',
+  PENDING = 'pending',
+  SUSPENDED = 'suspended',
+}
+
 @Entity('users')
 export class User extends BasicEntity {
-  @Column({ length: 100, name: 'full_name' })
-  fullName: string;
+  @Column({ length: 100, name: 'first_name' })
+  firstName: string;
 
-  @Column({ length: 100, name: 'phone_number' })
-  phoneNumber: string;
+  @Column({ length: 100, name: 'last_name' })
+  lastName: string;
 
   @Column({ length: 100, name: 'email', unique: true })
   email: string;
+
+  @Column({ type: 'enum', enum: UserGender, name: 'gender' })
+  gender: UserGender;
+
+  @Column({ length: 150, name: 'title' })
+  title: string;
+
+  @Column({
+    type: 'enum',
+    enum: UserStatus,
+    name: 'status',
+    default: UserStatus.PENDING,
+  })
+  status: UserStatus;
 
   @Column({ length: 255 })
   password: string;

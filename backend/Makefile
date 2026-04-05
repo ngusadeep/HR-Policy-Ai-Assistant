@@ -46,13 +46,13 @@ test-e2e: ## Run end-to-end tests
 # ── Docker ────────────────────────────────────────────────────────────────────
 
 docker-up: ## Start Docker services (Postgres, etc.) in detached mode
-	docker compose up -d
+	docker compose up
 
 docker-down: ## Stop and remove Docker containers
 	docker compose down
 
 docker-build: ## Build and start all Docker services
-	docker compose up -d --build
+	docker compose up --build
 
 # ── Scaffolding ───────────────────────────────────────────────────────────────
 

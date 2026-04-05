@@ -1,5 +1,5 @@
 import { Outlet } from '@tanstack/react-router'
-import { Monitor, Bell, Palette, Wrench, UserCog } from 'lucide-react'
+import { Monitor, Palette, Wrench, UserCog } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
@@ -7,37 +7,40 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { useAuthStore } from '@/stores/auth-store'
 import { SidebarNav } from './components/sidebar-nav'
 
-const sidebarNavItems = [
-  {
-    title: 'Profile',
-    href: '/dashboard/settings',
-    icon: <UserCog size={18} />,
-  },
-  {
-    title: 'Account',
-    href: '/dashboard/settings/account',
-    icon: <Wrench size={18} />,
-  },
-  {
-    title: 'Appearance',
-    href: '/dashboard/settings/appearance',
-    icon: <Palette size={18} />,
-  },
-  {
-    title: 'Notifications',
-    href: '/dashboard/settings/notifications',
-    icon: <Bell size={18} />,
-  },
-  {
-    title: 'Display',
-    href: '/dashboard/settings/display',
-    icon: <Monitor size={18} />,
-  },
-]
-
 export function Settings() {
+  const { auth } = useAuthStore()
+  const isAdmin = auth.isAdmin()
+
+  const sidebarNavItems = [
+    {
+      title: 'Profile',
+      href: '/dashboard/settings',
+      icon: <UserCog size={18} />,
+    },
+    ...(isAdmin
+      ? [
+          {
+            title: 'Account',
+            href: '/dashboard/settings/account',
+            icon: <Wrench size={18} />,
+          },
+        ]
+      : []),
+    {
+      title: 'Appearance',
+      href: '/dashboard/settings/appearance',
+      icon: <Palette size={18} />,
+    },
+    {
+      title: 'Display',
+      href: '/dashboard/settings/display',
+      icon: <Monitor size={18} />,
+    },
+  ]
+
   return (
     <>
       {/* ===== Top Heading ===== */}
@@ -56,7 +59,7 @@ export function Settings() {
             Settings
           </h1>
           <p className='text-muted-foreground'>
-            Manage your account settings and set e-mail preferences.
+            Manage your account settings and preferences.
           </p>
         </div>
         <Separator className='my-4 lg:my-6' />

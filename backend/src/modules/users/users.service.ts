@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { CreateUserDto } from 'src/modules/users/dto/create-user.dto';
 import type { UpdateUserDto } from 'src/modules/users/dto/update-user.dto';
+import type { UpdateUserStatusDto } from 'src/modules/users/dto/update-user-status.dto';
 import { LoggerService } from 'src/lib/logger/logger.service';
 import type { User } from 'src/modules/users/entities/user.entity';
 import { UserRepository } from 'src/modules/users/repositories/user.repository';
@@ -69,6 +70,17 @@ export class UsersService {
       role,
     });
     this.logger.log(`User updated with id: ${id}`);
+    return new UserResponseDto(updated);
+  }
+
+  async updateStatus(id: number, dto: UpdateUserStatusDto): Promise<UserResponseDto> {
+    const user = await this.userRepository.findByIdWithRole(id);
+    if (!user) {
+      throw new NotFoundException(`User not found with id: ${id}`);
+    }
+    user.status = dto.status;
+    const updated = await this.userRepository.save(user);
+    this.logger.log(`User ${id} status updated to: ${dto.status}`);
     return new UserResponseDto(updated);
   }
 

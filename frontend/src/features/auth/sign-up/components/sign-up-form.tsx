@@ -3,8 +3,10 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, CheckCircle2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { sleep, cn } from '@/lib/utils'
+import axios from 'axios'
+import { registerApi } from '@/features/auth/api/auth-api'
+import { handleServerError } from '@/lib/handle-server-error'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -63,20 +65,28 @@ export function SignUpForm({ className, ...props }: React.HTMLAttributes<HTMLFor
     },
   })
 
-  function onSubmit(_data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
-    toast.promise(sleep(1500), {
-      loading: 'Creating your account...',
-      success: () => {
-        setIsLoading(false)
-        setSubmitted(true)
-        return 'Account request submitted!'
-      },
-      error: () => {
-        setIsLoading(false)
-        return 'Something went wrong. Please try again.'
-      },
-    })
+    try {
+      await registerApi({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        gender: data.gender,
+        title: data.title,
+        password: data.password,
+      })
+      setSubmitted(true)
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        const msg = err.response.data?.message as string | undefined
+        form.setError('email', { message: msg ?? 'This email is already registered.' })
+      } else {
+        handleServerError(err)
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (submitted) {

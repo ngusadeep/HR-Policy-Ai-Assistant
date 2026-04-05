@@ -1,22 +1,22 @@
+import { useUsers } from './users-provider'
 import { UsersActionDialog } from './users-action-dialog'
 import { UsersDeleteDialog } from './users-delete-dialog'
-import { UsersInviteDialog } from './users-invite-dialog'
-import { useUsers } from './users-provider'
+import { UsersStatusDialog } from './users-status-dialog'
 
 export function UsersDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useUsers()
+
+  const closeWithDelay = (dialog: typeof open) => () => {
+    setOpen(dialog)
+    setTimeout(() => setCurrentRow(null), 500)
+  }
+
   return (
     <>
       <UsersActionDialog
         key='user-add'
         open={open === 'add'}
-        onOpenChange={() => setOpen('add')}
-      />
-
-      <UsersInviteDialog
-        key='user-invite'
-        open={open === 'invite'}
-        onOpenChange={() => setOpen('invite')}
+        onOpenChange={() => setOpen(open === 'add' ? null : 'add')}
       />
 
       {currentRow && (
@@ -24,24 +24,30 @@ export function UsersDialogs() {
           <UsersActionDialog
             key={`user-edit-${currentRow.id}`}
             open={open === 'edit'}
-            onOpenChange={() => {
-              setOpen('edit')
-              setTimeout(() => {
-                setCurrentRow(null)
-              }, 500)
-            }}
+            onOpenChange={closeWithDelay('edit')}
             currentRow={currentRow}
+          />
+
+          <UsersStatusDialog
+            key={`user-approve-${currentRow.id}`}
+            open={open === 'approve'}
+            onOpenChange={closeWithDelay('approve')}
+            currentRow={currentRow}
+            action='approve'
+          />
+
+          <UsersStatusDialog
+            key={`user-suspend-${currentRow.id}`}
+            open={open === 'suspend'}
+            onOpenChange={closeWithDelay('suspend')}
+            currentRow={currentRow}
+            action='suspend'
           />
 
           <UsersDeleteDialog
             key={`user-delete-${currentRow.id}`}
             open={open === 'delete'}
-            onOpenChange={() => {
-              setOpen('delete')
-              setTimeout(() => {
-                setCurrentRow(null)
-              }, 500)
-            }}
+            onOpenChange={closeWithDelay('delete')}
             currentRow={currentRow}
           />
         </>
