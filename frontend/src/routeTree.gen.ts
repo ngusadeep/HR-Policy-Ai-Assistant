@@ -36,8 +36,6 @@ import { Route as AuthenticatedDashboardSettingsIndexRouteImport } from './route
 import { Route as AuthenticatedDashboardHelpCenterIndexRouteImport } from './routes/_authenticated/dashboard/help-center/index'
 import { Route as AuthenticatedDashboardDocumentsIndexRouteImport } from './routes/_authenticated/dashboard/documents/index'
 import { Route as AuthenticatedDashboardAppsIndexRouteImport } from './routes/_authenticated/dashboard/apps/index'
-import { Route as AuthenticatedDashboardSettingsNotificationsRouteImport } from './routes/_authenticated/dashboard/settings/notifications'
-import { Route as AuthenticatedDashboardSettingsDisplayRouteImport } from './routes/_authenticated/dashboard/settings/display'
 import { Route as AuthenticatedDashboardSettingsAppearanceRouteImport } from './routes/_authenticated/dashboard/settings/appearance'
 import { Route as AuthenticatedDashboardSettingsAccountRouteImport } from './routes/_authenticated/dashboard/settings/account'
 import { Route as AuthenticatedDashboardErrorsErrorRouteImport } from './routes/_authenticated/dashboard/errors/$error'
@@ -184,18 +182,6 @@ const AuthenticatedDashboardAppsIndexRoute =
     path: '/apps/',
     getParentRoute: () => AuthenticatedDashboardRouteRoute,
   } as any)
-const AuthenticatedDashboardSettingsNotificationsRoute =
-  AuthenticatedDashboardSettingsNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedDashboardSettingsRouteRoute,
-  } as any)
-const AuthenticatedDashboardSettingsDisplayRoute =
-  AuthenticatedDashboardSettingsDisplayRouteImport.update({
-    id: '/display',
-    path: '/display',
-    getParentRoute: () => AuthenticatedDashboardSettingsRouteRoute,
-  } as any)
 const AuthenticatedDashboardSettingsAppearanceRoute =
   AuthenticatedDashboardSettingsAppearanceRouteImport.update({
     id: '/appearance',
@@ -237,8 +223,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/errors/$error': typeof AuthenticatedDashboardErrorsErrorRoute
   '/dashboard/settings/account': typeof AuthenticatedDashboardSettingsAccountRoute
   '/dashboard/settings/appearance': typeof AuthenticatedDashboardSettingsAppearanceRoute
-  '/dashboard/settings/display': typeof AuthenticatedDashboardSettingsDisplayRoute
-  '/dashboard/settings/notifications': typeof AuthenticatedDashboardSettingsNotificationsRoute
   '/dashboard/apps': typeof AuthenticatedDashboardAppsIndexRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsIndexRoute
   '/dashboard/help-center': typeof AuthenticatedDashboardHelpCenterIndexRoute
@@ -266,8 +250,6 @@ export interface FileRoutesByTo {
   '/dashboard/errors/$error': typeof AuthenticatedDashboardErrorsErrorRoute
   '/dashboard/settings/account': typeof AuthenticatedDashboardSettingsAccountRoute
   '/dashboard/settings/appearance': typeof AuthenticatedDashboardSettingsAppearanceRoute
-  '/dashboard/settings/display': typeof AuthenticatedDashboardSettingsDisplayRoute
-  '/dashboard/settings/notifications': typeof AuthenticatedDashboardSettingsNotificationsRoute
   '/dashboard/apps': typeof AuthenticatedDashboardAppsIndexRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsIndexRoute
   '/dashboard/help-center': typeof AuthenticatedDashboardHelpCenterIndexRoute
@@ -301,8 +283,6 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/errors/$error': typeof AuthenticatedDashboardErrorsErrorRoute
   '/_authenticated/dashboard/settings/account': typeof AuthenticatedDashboardSettingsAccountRoute
   '/_authenticated/dashboard/settings/appearance': typeof AuthenticatedDashboardSettingsAppearanceRoute
-  '/_authenticated/dashboard/settings/display': typeof AuthenticatedDashboardSettingsDisplayRoute
-  '/_authenticated/dashboard/settings/notifications': typeof AuthenticatedDashboardSettingsNotificationsRoute
   '/_authenticated/dashboard/apps/': typeof AuthenticatedDashboardAppsIndexRoute
   '/_authenticated/dashboard/documents/': typeof AuthenticatedDashboardDocumentsIndexRoute
   '/_authenticated/dashboard/help-center/': typeof AuthenticatedDashboardHelpCenterIndexRoute
@@ -334,8 +314,6 @@ export interface FileRouteTypes {
     | '/dashboard/errors/$error'
     | '/dashboard/settings/account'
     | '/dashboard/settings/appearance'
-    | '/dashboard/settings/display'
-    | '/dashboard/settings/notifications'
     | '/dashboard/apps'
     | '/dashboard/documents'
     | '/dashboard/help-center'
@@ -363,8 +341,6 @@ export interface FileRouteTypes {
     | '/dashboard/errors/$error'
     | '/dashboard/settings/account'
     | '/dashboard/settings/appearance'
-    | '/dashboard/settings/display'
-    | '/dashboard/settings/notifications'
     | '/dashboard/apps'
     | '/dashboard/documents'
     | '/dashboard/help-center'
@@ -397,8 +373,6 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/errors/$error'
     | '/_authenticated/dashboard/settings/account'
     | '/_authenticated/dashboard/settings/appearance'
-    | '/_authenticated/dashboard/settings/display'
-    | '/_authenticated/dashboard/settings/notifications'
     | '/_authenticated/dashboard/apps/'
     | '/_authenticated/dashboard/documents/'
     | '/_authenticated/dashboard/help-center/'
@@ -613,20 +587,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardAppsIndexRouteImport
       parentRoute: typeof AuthenticatedDashboardRouteRoute
     }
-    '/_authenticated/dashboard/settings/notifications': {
-      id: '/_authenticated/dashboard/settings/notifications'
-      path: '/notifications'
-      fullPath: '/dashboard/settings/notifications'
-      preLoaderRoute: typeof AuthenticatedDashboardSettingsNotificationsRouteImport
-      parentRoute: typeof AuthenticatedDashboardSettingsRouteRoute
-    }
-    '/_authenticated/dashboard/settings/display': {
-      id: '/_authenticated/dashboard/settings/display'
-      path: '/display'
-      fullPath: '/dashboard/settings/display'
-      preLoaderRoute: typeof AuthenticatedDashboardSettingsDisplayRouteImport
-      parentRoute: typeof AuthenticatedDashboardSettingsRouteRoute
-    }
     '/_authenticated/dashboard/settings/appearance': {
       id: '/_authenticated/dashboard/settings/appearance'
       path: '/appearance'
@@ -654,8 +614,6 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedDashboardSettingsRouteRouteChildren {
   AuthenticatedDashboardSettingsAccountRoute: typeof AuthenticatedDashboardSettingsAccountRoute
   AuthenticatedDashboardSettingsAppearanceRoute: typeof AuthenticatedDashboardSettingsAppearanceRoute
-  AuthenticatedDashboardSettingsDisplayRoute: typeof AuthenticatedDashboardSettingsDisplayRoute
-  AuthenticatedDashboardSettingsNotificationsRoute: typeof AuthenticatedDashboardSettingsNotificationsRoute
   AuthenticatedDashboardSettingsIndexRoute: typeof AuthenticatedDashboardSettingsIndexRoute
 }
 
@@ -665,10 +623,6 @@ const AuthenticatedDashboardSettingsRouteRouteChildren: AuthenticatedDashboardSe
       AuthenticatedDashboardSettingsAccountRoute,
     AuthenticatedDashboardSettingsAppearanceRoute:
       AuthenticatedDashboardSettingsAppearanceRoute,
-    AuthenticatedDashboardSettingsDisplayRoute:
-      AuthenticatedDashboardSettingsDisplayRoute,
-    AuthenticatedDashboardSettingsNotificationsRoute:
-      AuthenticatedDashboardSettingsNotificationsRoute,
     AuthenticatedDashboardSettingsIndexRoute:
       AuthenticatedDashboardSettingsIndexRoute,
   }

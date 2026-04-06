@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '@/components/data-table'
 import { LongText } from '@/components/long-text'
-import { statusStyles, categories } from '../data/data'
+import { statusStyles, formatBytes } from '../data/data'
 import { type PolicyDocument } from '../data/schema'
 import { DataTableRowActions } from './data-table-row-actions'
 
@@ -37,12 +37,12 @@ export const documentsColumns: ColumnDef<PolicyDocument>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'name',
+    accessorKey: 'originalName',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Document Name' />
     ),
     cell: ({ row }) => (
-      <LongText className='max-w-64 ps-3'>{row.getValue('name')}</LongText>
+      <LongText className='max-w-64 ps-3'>{row.getValue('originalName')}</LongText>
     ),
     meta: {
       className: cn(
@@ -53,19 +53,6 @@ export const documentsColumns: ColumnDef<PolicyDocument>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'category',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Category' />
-    ),
-    cell: ({ row }) => {
-      const cat = categories.find((c) => c.value === row.getValue('category'))
-      return <div className='capitalize'>{cat?.label ?? row.getValue('category')}</div>
-    },
-    filterFn: (row, id, value) => value.includes(row.getValue(id)),
-    enableHiding: false,
-    enableSorting: false,
-  },
-  {
     accessorKey: 'status',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Status' />
@@ -74,11 +61,9 @@ export const documentsColumns: ColumnDef<PolicyDocument>[] = [
       const status = row.original.status
       const badgeColor = statusStyles.get(status)
       return (
-        <div className='flex space-x-2'>
-          <Badge variant='outline' className={cn('capitalize', badgeColor)}>
-            {status}
-          </Badge>
-        </div>
+        <Badge variant='outline' className={cn('capitalize', badgeColor)}>
+          {status}
+        </Badge>
       )
     },
     filterFn: (row, id, value) => value.includes(row.getValue(id)),
@@ -86,39 +71,44 @@ export const documentsColumns: ColumnDef<PolicyDocument>[] = [
     enableSorting: false,
   },
   {
-    accessorKey: 'pages',
+    accessorKey: 'chunkCount',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Pages' />
+      <DataTableColumnHeader column={column} title='Chunks' />
     ),
     cell: ({ row }) => (
-      <div className='text-center'>{row.getValue('pages')}</div>
+      <div className='text-center tabular-nums'>{row.getValue('chunkCount')}</div>
     ),
     meta: { className: 'w-20' },
   },
   {
-    accessorKey: 'fileSize',
+    accessorKey: 'size',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Size' />
     ),
-    cell: ({ row }) => <div>{row.getValue('fileSize')}</div>,
+    cell: ({ row }) => (
+      <div className='tabular-nums'>{formatBytes(row.getValue('size'))}</div>
+    ),
     enableSorting: false,
     meta: { className: 'w-24' },
   },
   {
-    accessorKey: 'uploadedBy',
+    id: 'uploadedBy',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Uploaded By' />
     ),
-    cell: ({ row }) => <div>{row.getValue('uploadedBy')}</div>,
+    cell: ({ row }) => {
+      const u = row.original.uploadedBy
+      return <div>{u ? `${u.firstName} ${u.lastName}` : '—'}</div>
+    },
     enableSorting: false,
   },
   {
-    accessorKey: 'uploadedAt',
+    accessorKey: 'createdAt',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Uploaded At' />
     ),
     cell: ({ row }) => {
-      const date: Date = row.getValue('uploadedAt')
+      const date: Date = row.getValue('createdAt')
       return (
         <div className='text-nowrap text-sm text-muted-foreground'>
           {date.toLocaleDateString('en-GB', {

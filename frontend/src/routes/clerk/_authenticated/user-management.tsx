@@ -70,13 +70,7 @@ function UserManagement() {
                     contentProps={{ side: 'right' }}
                   >
                     <p>
-                      This is the same as{' '}
-                      <Link
-                        to='/users'
-                        className='text-blue-500 underline decoration-dashed underline-offset-2'
-                      >
-                        '/users'
-                      </Link>
+                      Manage users and their roles here.
                     </p>
 
                     <p className='mt-4'>
@@ -90,7 +84,7 @@ function UserManagement() {
               <UsersPrimaryButtons />
             </div>
             <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-y-0 lg:space-x-12'>
-              <UsersTable data={users} navigate={navigate} search={search} />
+              <UsersTable data={[...users]} navigate={navigate} search={search} />
             </div>
           </Main>
 
@@ -138,10 +132,10 @@ function Unauthorized() {
               <p>
                 This is the same as{' '}
                 <Link
-                  to='/users'
+                  to='/dashboard/users'
                   className='text-blue-500 underline decoration-dashed underline-offset-2'
                 >
-                  '/users'
+                  '/dashboard/users'
                 </Link>
                 .{' '}
               </p>

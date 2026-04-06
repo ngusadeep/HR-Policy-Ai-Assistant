@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { WsAdapter } from '@nestjs/platform-ws';
 import { AppModule } from 'src/app.module';
 import helmet from 'helmet';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -16,6 +17,7 @@ async function bootstrap() {
 
   const isProduction = configService.get<string>('nodeEnv') === 'production';
 
+  app.useWebSocketAdapter(new WsAdapter(app));
   app.enableCors({ origin: configService.get<string>('corsOrigin', '*') });
   app.use(helmet());
   app.enableVersioning({
@@ -62,8 +64,10 @@ async function bootstrap() {
       swaggerOptions: { persistAuthorization: true },
     });
 
-    await app.get(SeederService).seed();
   }
+
+  // Seeder always runs — it is idempotent (skips existing records)
+  await app.get(SeederService).seed();
 
   await app.listen(configService.get<number>('port', 3000));
 }

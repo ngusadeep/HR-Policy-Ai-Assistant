@@ -14,7 +14,7 @@ function ClerkAuthLayout() {
       <div className='relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-e'>
         <div className='absolute inset-0 bg-slate-500' />
         <Link
-          to='/'
+          to='/dashboard'
           className='relative z-20 flex items-center text-lg font-medium'
         >
           <Logo className='me-2' />
@@ -45,7 +45,7 @@ function ClerkAuthLayout() {
             Welcome to the example Clerk auth page. <br />
             Back to{' '}
             <Link
-              to='/'
+              to='/dashboard'
               className='underline decoration-dashed underline-offset-2'
             >
               Dashboard

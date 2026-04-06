@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { LoginDto } from 'src/modules/auth/dto/login.dto';
 import { RegisterDto } from 'src/modules/auth/dto/register.dto';
@@ -18,6 +19,8 @@ import { UpdateProfileDto } from 'src/modules/auth/dto/update-profile.dto';
 @ApiTags('Auth')
 @ApiBearerAuth('JWT')
 @Controller('auth')
+// Stricter rate limit on auth endpoints: max 10 attempts/minute per IP
+@Throttle({ medium: { ttl: 60_000, limit: 10 } })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

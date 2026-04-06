@@ -1,14 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { type Table } from '@tanstack/react-table'
-import { AlertTriangle } from 'lucide-react'
-import { toast } from 'sonner'
-import { sleep } from '@/lib/utils'
+import { type Table, type Row } from '@tanstack/react-table'
+import { Loader2, AlertTriangle } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
+import { handleServerError } from '@/lib/handle-server-error'
+import { deleteDocuments } from '../api/documents-api'
+import { type PolicyDocument } from '../data/schema'
 
 type DocumentsMultiDeleteDialogProps<TData> = {
   open: boolean
@@ -24,36 +26,33 @@ export function DocumentsMultiDeleteDialog<TData>({
   table,
 }: DocumentsMultiDeleteDialogProps<TData>) {
   const [value, setValue] = useState('')
+  const queryClient = useQueryClient()
   const selectedRows = table.getFilteredSelectedRowModel().rows
 
-  const handleDelete = () => {
-    if (value.trim() !== CONFIRM_WORD) {
-      toast.error(`Please type "${CONFIRM_WORD}" to confirm.`)
-      return
-    }
-    onOpenChange(false)
-    toast.promise(sleep(2000), {
-      loading: 'Deleting documents...',
-      success: () => {
-        setValue('')
-        table.resetRowSelection()
-        return `Deleted ${selectedRows.length} ${selectedRows.length > 1 ? 'documents' : 'document'}`
-      },
-      error: 'Error deleting documents',
-    })
-  }
+  const deleteMutation = useMutation({
+    mutationFn: () => {
+      const ids = selectedRows.map((r) => (r as Row<PolicyDocument>).original.id)
+      return deleteDocuments(ids)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents'] })
+      setValue('')
+      table.resetRowSelection()
+      onOpenChange(false)
+    },
+    onError: (err) => handleServerError(err),
+  })
 
   return (
     <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      handleConfirm={handleDelete}
-      disabled={value.trim() !== CONFIRM_WORD}
+      handleConfirm={() => deleteMutation.mutate()}
+      disabled={value.trim() !== CONFIRM_WORD || deleteMutation.isPending}
       title={
         <span className='text-destructive'>
-          <AlertTriangle className='me-1 inline-block stroke-destructive' size={18} />{' '}
-          Delete {selectedRows.length}{' '}
-          {selectedRows.length > 1 ? 'documents' : 'document'}
+          <AlertTriangle className='me-1 inline-block stroke-destructive' size={18} />
+          Delete {selectedRows.length} {selectedRows.length > 1 ? 'documents' : 'document'}
         </span>
       }
       desc={
@@ -73,13 +72,11 @@ export function DocumentsMultiDeleteDialog<TData>({
           </Label>
           <Alert variant='destructive'>
             <AlertTitle>Warning!</AlertTitle>
-            <AlertDescription>
-              This operation cannot be rolled back.
-            </AlertDescription>
+            <AlertDescription>This operation cannot be rolled back.</AlertDescription>
           </Alert>
         </div>
       }
-      confirmText='Delete'
+      confirmText={deleteMutation.isPending ? <Loader2 className='animate-spin' /> : 'Delete'}
       destructive
     />
   )

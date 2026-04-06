@@ -4,6 +4,10 @@
 /build
 /schematics/dist
 
+# Uploaded files (keep directory, ignore contents)
+/uploads/*
+!/uploads/.gitkeep
+
 # Logs
 logs
 *.log

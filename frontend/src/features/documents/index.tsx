@@ -1,20 +1,27 @@
+import { Loader2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { fetchDocuments } from './api/documents-api'
 import { DocumentsDialogs } from './components/documents-dialogs'
 import { DocumentsPrimaryButtons } from './components/documents-primary-buttons'
 import { DocumentsProvider } from './components/documents-provider'
 import { DocumentsTable } from './components/documents-table'
-import { documents } from './data/documents'
 
 const route = getRouteApi('/_authenticated/dashboard/documents/')
 
 export function Documents() {
   const search = route.useSearch()
   const navigate = route.useNavigate()
+
+  const { data: documents = [], isLoading, isError } = useQuery({
+    queryKey: ['documents'],
+    queryFn: fetchDocuments,
+  })
 
   return (
     <DocumentsProvider>
@@ -36,7 +43,18 @@ export function Documents() {
           </div>
           <DocumentsPrimaryButtons />
         </div>
-        <DocumentsTable data={documents} search={search} navigate={navigate} />
+
+        {isLoading ? (
+          <div className='flex flex-1 items-center justify-center py-24'>
+            <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+          </div>
+        ) : isError ? (
+          <div className='flex flex-1 items-center justify-center py-24 text-sm text-destructive'>
+            Failed to load documents. Please refresh the page.
+          </div>
+        ) : (
+          <DocumentsTable data={documents} search={search} navigate={navigate} />
+        )}
       </Main>
 
       <DocumentsDialogs />

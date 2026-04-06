@@ -7,10 +7,6 @@ import {
   type AppendMessage,
   AssistantRuntimeProvider,
 } from '@assistant-ui/react'
-import {
-  getFakeResponse,
-  streamFakeResponse,
-} from '@/features/chat/data/fake-chat-data'
 
 export type MyMessage = {
   id: string
@@ -18,7 +14,6 @@ export type MyMessage = {
   content: string
 }
 
-/** Optional: provide a stream function to wire your API. If not provided, fake static responses are used. */
 export type ChatStreamFn = (params: {
   messages: Array<{ role: 'user' | 'assistant'; content: string }>
 }) => AsyncGenerator<string, void, unknown>
@@ -31,17 +26,6 @@ const convertMessage = (message: MyMessage): ThreadMessageLike => {
     role: message.role,
     content: [{ type: 'text', text: message.content }],
   }
-}
-
-/** Static fake stream: HR-themed canned responses, simulated streaming. */
-async function* fakeStream(params: {
-  messages: Array<{ role: 'user' | 'assistant'; content: string }>
-}): AsyncGenerator<string> {
-  const { messages } = params
-  const last = messages[messages.length - 1]
-  if (last?.role !== 'user') return
-  const response = getFakeResponse(last.content)
-  yield* streamFakeResponse(response, 12)
 }
 
 const TITLE_MAX = 48
@@ -64,8 +48,7 @@ export function ChatRuntimeProvider({
   onMessagesChange,
 }: Readonly<{
   children: ReactNode
-  /** Wire your chat API here. If omitted, static fake HR-themed responses are used. */
-  streamChat?: ChatStreamFn
+  streamChat: ChatStreamFn
   /** Called whenever messages change (so parent can show current chat in history). */
   onMessagesChange?: (messages: MyMessage[]) => void
 }>) {
@@ -100,7 +83,8 @@ export function ChatRuntimeProvider({
     setMessages((prev) => [...prev, assistantMessage])
 
     try {
-      const stream = streamChat ?? fakeStream
+      if (!streamChat) throw new Error('No chat stream provider configured.')
+      const stream = streamChat
       const streamIterator = stream({
         messages: updatedMessages.map((m) => ({
           role: m.role,
@@ -117,10 +101,11 @@ export function ChatRuntimeProvider({
       }
     } catch (error) {
       console.error('Chat error:', error)
+      const msg = error instanceof Error ? error.message : 'Sorry, an error occurred. Please try again.'
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
-            ? { ...m, content: 'Sorry, an error occurred. Please try again.' }
+            ? { ...m, content: `⚠️ ${msg}` }
             : m
         )
       )
@@ -165,7 +150,8 @@ export function ChatRuntimeProvider({
     setMessages((prev) => [...prev, assistantMessage])
 
     try {
-      const stream = streamChat ?? fakeStream
+      if (!streamChat) throw new Error('No chat stream provider configured.')
+      const stream = streamChat
       const streamIterator = stream({
         messages: updatedMessages.map((m) => ({
           role: m.role,
@@ -182,10 +168,11 @@ export function ChatRuntimeProvider({
       }
     } catch (error) {
       console.error('Chat error:', error)
+      const msg = error instanceof Error ? error.message : 'Sorry, an error occurred. Please try again.'
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
-            ? { ...m, content: 'Sorry, an error occurred. Please try again.' }
+            ? { ...m, content: `⚠️ ${msg}` }
             : m
         )
       )
@@ -215,7 +202,8 @@ export function ChatRuntimeProvider({
     setMessages((prev) => [...prev, assistantMessage])
 
     try {
-      const stream = streamChat ?? fakeStream
+      if (!streamChat) throw new Error('No chat stream provider configured.')
+      const stream = streamChat
       const streamIterator = stream({
         messages: kept.map((m) => ({ role: m.role, content: m.content })),
       })
@@ -228,10 +216,11 @@ export function ChatRuntimeProvider({
       }
     } catch (error) {
       console.error('Chat error:', error)
+      const msg = error instanceof Error ? error.message : 'Sorry, an error occurred. Please try again.'
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
-            ? { ...m, content: 'Sorry, an error occurred. Please try again.' }
+            ? { ...m, content: `⚠️ ${msg}` }
             : m
         )
       )

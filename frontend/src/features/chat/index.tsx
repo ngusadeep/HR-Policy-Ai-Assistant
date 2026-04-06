@@ -6,14 +6,14 @@ import { PanelLeftIcon, PlusIcon, SearchIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { FAKE_CHAT_HISTORY } from './data/fake-chat-data'
-import type { ChatHistoryItem } from './data/fake-chat-data'
+import type { ChatHistoryItem } from './data/chat-types'
 import { ChatHistorySearchModal } from './components/chat-history-search-modal'
 import {
   ChatRuntimeProvider,
   getThreadSummary,
   type MyMessage,
 } from './components/chat-runtime-provider'
+import { wsChatStream } from './api/chat-ws'
 import { ChatSidebar } from './components/chat-sidebar'
 import { Thread } from './components/thread'
 
@@ -21,14 +21,24 @@ function ThreadWithSuggestions() {
   const aui = useAui({
     suggestions: Suggestions([
       {
-        title: 'Hello!',
-        label: 'start a conversation',
-        prompt: 'Hello! What can you help me with?',
+        title: 'How many leave days do I get?',
+        label: 'annual leave policy',
+        prompt: 'How many days of annual leave am I entitled to?',
       },
       {
-        title: 'What can you do?',
-        label: 'tell me your capabilities',
-        prompt: 'What kinds of things can you help me with?',
+        title: 'Can I work from home?',
+        label: 'remote work policy',
+        prompt: 'What is the company remote work or work-from-home policy?',
+      },
+      {
+        title: 'How do I submit expenses?',
+        label: 'expenses & reimbursement',
+        prompt: 'How do I submit expenses for reimbursement?',
+      },
+      {
+        title: 'What does the code of conduct say?',
+        label: 'conduct & ethics',
+        prompt: 'Can you summarise the company code of conduct?',
       },
     ]),
   })
@@ -45,9 +55,7 @@ export function Chat() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [threadKey, setThreadKey] = useState(0)
   const [currentMessages, setCurrentMessages] = useState<MyMessage[]>([])
-  const [historyItems, setHistoryItems] = useState<ChatHistoryItem[]>(() => [
-    ...FAKE_CHAT_HISTORY,
-  ])
+  const [historyItems, setHistoryItems] = useState<ChatHistoryItem[]>([])
 
   useEffect(() => {
     if (isMobile) setSidebarOpen(false)
@@ -143,6 +151,7 @@ export function Chat() {
         <div className='min-h-0 flex-1'>
           <ChatRuntimeProvider
             key={threadKey}
+            streamChat={wsChatStream}
             onMessagesChange={onMessagesChange}
           >
             <ThreadWithSuggestions />

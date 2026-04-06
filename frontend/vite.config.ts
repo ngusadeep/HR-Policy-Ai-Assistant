@@ -6,6 +6,8 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Read .env from the monorepo root so both `pnpm dev` and docker use one file
+  envDir: '..',
   plugins: [
     tanstackRouter({
       target: 'react',

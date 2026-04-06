@@ -6,7 +6,7 @@ import { Logo } from '@/assets/logo'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuthStore } from '@/stores/auth-store'
 import { ChatUserProfile } from './chat-user-profile'
-import type { ChatHistoryItem } from '@/features/chat/data/fake-chat-data'
+import type { ChatHistoryItem } from '@/features/chat/data/chat-types'
 
 type ChatSidebarProps = {
   open: boolean

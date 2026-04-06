@@ -19,4 +19,21 @@ export default () => ({
     sync: process.env.DB_SYNC === 'true',
     logging: process.env.DB_LOGGING === 'true',
   },
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY ?? '',
+    embeddingModel: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
+  },
+  qdrant: {
+    url: process.env.QDRANT_URL || 'http://localhost:6333',
+    collection: process.env.QDRANT_COLLECTION || 'hr_policies',
+    vectorSize: parseInt(process.env.QDRANT_VECTOR_SIZE ?? '1536', 10),
+    scoreThreshold: parseFloat(process.env.RAG_SCORE_THRESHOLD ?? '0.4'),
+  },
+  uploadsDir: process.env.UPLOADS_DIR || 'uploads',
+  langsmith: {
+    apiKey: process.env.LANGSMITH_API_KEY ?? process.env.LANGCHAIN_API_KEY ?? '',
+    tracing: process.env.LANGSMITH_TRACING === 'true' || process.env.LANGCHAIN_TRACING_V2 === 'true',
+    project: process.env.LANGSMITH_PROJECT ?? process.env.LANGCHAIN_PROJECT ?? 'hr-policy-assistant',
+    endpoint: process.env.LANGSMITH_ENDPOINT ?? 'https://api.smith.langchain.com',
+  },
 });

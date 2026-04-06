@@ -7,6 +7,8 @@ import { validate } from 'src/config/validation';
   imports: [
     NestConfigModule.forRoot({
       isGlobal: true,
+      // Single root .env — works for both local dev (pnpm start:dev) and Docker
+      envFilePath: ['.env', '../.env'],
       load: [configuration],
       validate,
     }),

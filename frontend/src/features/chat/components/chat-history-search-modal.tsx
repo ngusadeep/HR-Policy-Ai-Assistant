@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
-import type { ChatHistoryItem } from '@/features/chat/data/fake-chat-data'
+import type { ChatHistoryItem } from '@/features/chat/data/chat-types'
 
 export type { ChatHistoryItem }
 

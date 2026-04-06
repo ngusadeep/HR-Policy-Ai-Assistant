@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Upload, FileText, X } from 'lucide-react'
+import { Upload, FileText, X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { sleep } from '@/lib/utils'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { handleServerError } from '@/lib/handle-server-error'
+import { uploadDocument } from '../api/documents-api'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,15 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { categories } from '../data/data'
 
 type DocumentsUploadDialogProps = {
   open: boolean
@@ -30,9 +23,19 @@ type DocumentsUploadDialogProps = {
 
 export function DocumentsUploadDialog({ open, onOpenChange }: DocumentsUploadDialogProps) {
   const [file, setFile] = useState<File | null>(null)
-  const [category, setCategory] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
+  const queryClient = useQueryClient()
+
+  const uploadMutation = useMutation({
+    mutationFn: (f: File) => uploadDocument(f),
+    onSuccess: (doc) => {
+      toast.success(`"${doc.originalName}" uploaded. Indexing in background…`)
+      queryClient.invalidateQueries({ queryKey: ['documents'] })
+      setFile(null)
+      onOpenChange(false)
+    },
+    onError: (err) => handleServerError(err),
+  })
 
   const handleFile = (f: File) => {
     const allowed = ['application/pdf', 'text/plain', 'text/markdown']
@@ -50,23 +53,6 @@ export function DocumentsUploadDialog({ open, onOpenChange }: DocumentsUploadDia
     if (dropped) handleFile(dropped)
   }
 
-  const handleUpload = async () => {
-    if (!file || !category) {
-      toast.error('Please select a file and a category.')
-      return
-    }
-    setIsUploading(true)
-    await toast.promise(sleep(2500), {
-      loading: `Uploading "${file.name}"...`,
-      success: `"${file.name}" uploaded and queued for indexing.`,
-      error: 'Upload failed. Please try again.',
-    })
-    setIsUploading(false)
-    setFile(null)
-    setCategory('')
-    onOpenChange(false)
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='sm:max-w-md'>
@@ -77,7 +63,7 @@ export function DocumentsUploadDialog({ open, onOpenChange }: DocumentsUploadDia
           </DialogDescription>
         </DialogHeader>
 
-        <div className='space-y-4 py-2'>
+        <div className='py-2'>
           {/* Drop zone */}
           <div
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
@@ -117,32 +103,21 @@ export function DocumentsUploadDialog({ open, onOpenChange }: DocumentsUploadDia
               </>
             )}
           </div>
-
-          {/* Category */}
-          <div className='space-y-1.5'>
-            <Label htmlFor='doc-category'>Policy Category</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger id='doc-category'>
-                <SelectValue placeholder='Select a category...' />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
         <DialogFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isUploading}>
+          <Button variant='outline' onClick={() => onOpenChange(false)} disabled={uploadMutation.isPending}>
             Cancel
           </Button>
-          <Button onClick={handleUpload} disabled={!file || !category || isUploading}>
-            <Upload className='mr-2 h-4 w-4' />
-            Upload & Index
+          <Button
+            onClick={() => file && uploadMutation.mutate(file)}
+            disabled={!file || uploadMutation.isPending}
+          >
+            {uploadMutation.isPending ? (
+              <><Loader2 className='mr-2 h-4 w-4 animate-spin' /> Uploading…</>
+            ) : (
+              <><Upload className='mr-2 h-4 w-4' /> Upload & Index</>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

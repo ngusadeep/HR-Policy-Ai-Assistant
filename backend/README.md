@@ -1,6 +1,6 @@
-# NestJS REST Starter
+# hr-assistant-api
 
-A production-ready NestJS REST API starter with batteries included.
+HR Assistant API
 
 ## Features
 
@@ -12,7 +12,7 @@ A production-ready NestJS REST API starter with batteries included.
 - **Global exception filter** — consistent JSON error responses
 - **Response interceptor** — uniform response envelope with status, timestamp, and path
 - **Seeder** — seeds default Admin/Manager roles and users on startup (non-production)
-- **Docker** — multi-stage Dockerfile + docker-compose with Postgres
+- **Docker** — multi-stage Dockerfile + docker-compose with Postgres and Qdrant
 - **JSON logging** — structured JSON logs via NestJS `ConsoleLogger`
 - **Security** — Helmet, CORS with configurable origin, Swagger disabled in production
 
@@ -23,7 +23,7 @@ A production-ready NestJS REST API starter with batteries included.
 ```bash
 pnpm install
 make init        # interactive: sets project name, description, .env, optional git reset
-make docker-up   # start Postgres
+make docker-up   # start Postgres and Qdrant
 make dev         # start dev server with hot reload
 ```
 
@@ -90,6 +90,13 @@ make docker-up      # start existing containers
 make docker-down    # stop containers
 ```
 
+The compose stack includes:
+- Postgres for application data
+- Qdrant for document embeddings and chat retrieval
+
+When the backend runs in Docker, `QDRANT_URL` is overridden to `http://qdrant:6333`.
+When the backend runs locally on your machine, keep `QDRANT_URL=http://localhost:6333`.
+
 ## Default seed credentials
 
 | Role    | Email                  | Password       |
@@ -121,6 +128,15 @@ See `.env.example` for all required variables.
 | `DB_DATABASE`     | Database name                        | —             |
 | `DB_SYNC`         | Auto-sync schema (dev only)          | `false`       |
 | `DB_LOGGING`      | Log SQL queries                      | `false`       |
+| `OPENAI_API_KEY`  | OpenAI API key for embeddings/chat   | —             |
+| `OPENAI_EMBEDDING_MODEL` | Embedding model name           | `text-embedding-3-small` |
+| `QDRANT_URL`      | Qdrant server URL                    | `http://localhost:6333` |
+| `QDRANT_COLLECTION` | Default vector collection          | `hr_policies` |
+| `QDRANT_VECTOR_SIZE` | Embedding vector size             | `1536`        |
+| `UPLOADS_DIR`     | Directory for uploaded files         | `uploads`     |
+| `LANGCHAIN_API_KEY` | Optional LangSmith API key         | —             |
+| `LANGCHAIN_TRACING_V2` | Enable LangSmith tracing         | `false`       |
+| `LANGCHAIN_PROJECT` | LangSmith project name             | `hr-policy-assistant` |
 
 ## License
 

@@ -22,7 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
-import { categories, statuses } from '../data/data'
+import { statuses } from '../data/data'
 import { type PolicyDocument } from '../data/schema'
 import { DataTableBulkActions } from './data-table-bulk-actions'
 import { documentsColumns as columns } from './documents-columns'
@@ -50,8 +50,7 @@ export function DocumentsTable({ data, search, navigate }: DataTableProps) {
     pagination: { defaultPage: 1, defaultPageSize: 10 },
     globalFilter: { enabled: false },
     columnFilters: [
-      { columnId: 'name', searchKey: 'name', type: 'string' },
-      { columnId: 'category', searchKey: 'category', type: 'array' },
+      { columnId: 'originalName', searchKey: 'originalName', type: 'string' },
       { columnId: 'status', searchKey: 'status', type: 'array' },
     ],
   })
@@ -95,17 +94,12 @@ export function DocumentsTable({ data, search, navigate }: DataTableProps) {
       <DataTableToolbar
         table={table}
         searchPlaceholder='Filter documents...'
-        searchKey='name'
+        searchKey='originalName'
         filters={[
-          {
-            columnId: 'category',
-            title: 'Category',
-            options: categories.map((c) => ({ ...c })),
-          },
           {
             columnId: 'status',
             title: 'Status',
-            options: statuses.map((s) => ({ ...s })),
+            options: statuses,
           },
         ]}
       />
