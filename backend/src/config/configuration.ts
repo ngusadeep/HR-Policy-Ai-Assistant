@@ -36,4 +36,7 @@ export default () => ({
     project: process.env.LANGSMITH_PROJECT ?? process.env.LANGCHAIN_PROJECT ?? 'hr-policy-assistant',
     endpoint: process.env.LANGSMITH_ENDPOINT ?? 'https://api.smith.langchain.com',
   },
+  guardrails: {
+    groundingCheckEnabled: process.env.GROUNDING_CHECK_ENABLED ?? 'true',
+  },
 });

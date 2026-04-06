@@ -3,6 +3,7 @@ import { InputGuard } from './guards/input.guard';
 import { ContextGuard, type GuardedChunk } from './guards/context.guard';
 import { PromptGuard } from './guards/prompt.guard';
 import { ResponseFilter } from './filters/response.filter';
+import { OutputGuard, type GroundingResult } from './guards/output.guard';
 
 export type { GuardedChunk };
 
@@ -13,6 +14,7 @@ export class GuardrailsService {
     private readonly contextGuard: ContextGuard,
     private readonly promptGuard: PromptGuard,
     private readonly responseFilter: ResponseFilter,
+    private readonly outputGuard: OutputGuard,
   ) {}
 
   /** L1 — validate user input before it enters the pipeline. Throws WsException on violation. */
@@ -29,5 +31,18 @@ export class GuardrailsService {
   /** L7 — scrub PII from the assembled LLM response before sending to client or DB. */
   scrubOutput(text: string, sessionId?: string): string {
     return this.responseFilter.scrub(text, sessionId);
+  }
+
+  /**
+   * L6 — verify the assembled LLM response is grounded in the retrieved context.
+   * Designed to be called asynchronously after streaming completes (fire-and-forget).
+   * Results feed LangSmith observability and DB analytics — they do not block the stream.
+   */
+  async checkGrounding(
+    assembledResponse: string,
+    chunks: GuardedChunk[],
+    sessionId?: string,
+  ): Promise<GroundingResult> {
+    return this.outputGuard.check(assembledResponse, chunks, sessionId);
   }
 }

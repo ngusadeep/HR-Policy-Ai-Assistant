@@ -109,6 +109,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const { stream, sources } = await this.chatRagService.query(messages, collection, sessionId);
 
+      // ── L6 pre-stream: if no chunks were retrieved, skip the LLM and send fallback ──
+      if (sources.length === 0) {
+        this.logger.warn({ message: 'No context chunks — skipping LLM, sending fallback', sessionId });
+        const fallback =
+          "Sorry, I can't help with that one! But if you have any questions about HR policies — like leave, benefits, conduct, or anything workplace-related — I'm happy to help with those!";
+        send(client, { type: 'token', sessionId, text: fallback });
+        send(client, { type: 'done', sessionId });
+
+        if (sessionRecord && lastUser) {
+          this.chatSessionRepo
+            .appendMessages(sessionRecord, [
+              { role: 'user', content: lastUser.content },
+              { role: 'assistant', content: fallback },
+            ])
+            .catch((err: unknown) =>
+              this.logger.warn({ message: 'Could not persist fallback message', sessionId, err }),
+            );
+        }
+        return;
+      }
+
       // Collect assistant tokens to persist the full response after streaming
       const assistantTokens: string[] = [];
 
@@ -124,9 +145,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         send(client, { type: 'sources', sessionId, sources });
         send(client, { type: 'done', sessionId });
 
+        const assistantContent = assistantTokens.join('');
+
         // Persist user message + assistant response in DB (fire-and-forget)
         if (sessionRecord && lastUser) {
-          const assistantContent = assistantTokens.join('');
           this.chatSessionRepo
             .appendMessages(sessionRecord, [
               { role: 'user', content: lastUser.content },
@@ -136,6 +158,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
               this.logger.warn({ message: 'Could not persist chat messages', sessionId, err }),
             );
         }
+
+        // ── L6 post-stream: async grounding check for observability ──────────
+        // Runs after the stream is delivered — does not block the client response.
+        this.guardrails
+          .checkGrounding(assistantContent, sources, sessionId)
+          .then((result) => {
+            if (!result.grounded) {
+              this.logger.warn({
+                event: 'guardrail_triggered',
+                layer: 'L6_output',
+                sessionId,
+                trigger: result.trigger,
+                message: 'Post-stream grounding check failed — investigate for hallucination',
+              });
+            }
+          })
+          .catch((err: unknown) =>
+            this.logger.warn({ message: 'Grounding check threw unexpectedly', sessionId, err }),
+          );
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred.';
