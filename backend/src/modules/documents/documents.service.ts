@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as fs from 'fs';
-import * as path from 'path';
+import { promises as fs } from 'fs';
 import { DocumentRepository } from './repositories/document.repository';
 import { DocumentStatus } from './entities/document.entity';
 import { DocumentResponseDto } from './dto/document-response.dto';
@@ -40,7 +39,7 @@ export class DocumentsService {
     });
 
     // Run ingestion in background (no await) so the HTTP response returns immediately
-    this.runIngestion(doc.id, file.path, file.mimetype, collection, file.originalname).catch(
+    void this.runIngestion(doc.id, file.path, file.mimetype, collection, file.originalname).catch(
       (err: unknown) => this.logger.error(`Background ingestion failed for doc ${doc.id}`, err),
     );
 
@@ -70,9 +69,10 @@ export class DocumentsService {
       this.logger.warn(`Could not delete Chroma vectors for doc ${id}:`, err);
     }
 
-    // Remove file from disk
+    // Remove file from disk (async to avoid blocking the event loop)
     try {
-      if (fs.existsSync(doc.storedPath)) fs.unlinkSync(doc.storedPath);
+      await fs.access(doc.storedPath);
+      await fs.unlink(doc.storedPath);
     } catch (err) {
       this.logger.warn(`Could not delete file for doc ${id}:`, err);
     }

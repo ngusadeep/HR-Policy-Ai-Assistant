@@ -63,6 +63,7 @@ export class ChromaService implements OnModuleInit {
       collectionMetadata: { 'hnsw:space': 'cosine' },
     });
 
+    this.logger.log(`Chroma: initialised store for collection "${collection}"`);
     this.stores.set(collection, store);
     return store;
   }
@@ -80,14 +81,17 @@ export class ChromaService implements OnModuleInit {
     ids: string[],
     collection?: string,
   ): Promise<void> {
-    const store = this.getStore(collection ?? this.defaultCollection);
+    const col = collection ?? this.defaultCollection;
+    const store = this.getStore(col);
 
     const docs: Document[] = chunks.map((c) => ({
       pageContent: c.text,
       metadata: c.metadata,
     }));
 
+    this.logger.log(`Chroma: upserting ${docs.length} chunks into collection "${col}"`);
     await store.addDocuments(docs, { ids });
+    this.logger.log(`Chroma: upsert complete — ${docs.length} chunks stored in "${col}"`);
   }
 
   /**

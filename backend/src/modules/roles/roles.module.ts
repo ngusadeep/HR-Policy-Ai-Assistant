@@ -6,9 +6,10 @@ import { Permission } from 'src/modules/roles/entities/permission.entity';
 import { Role } from 'src/modules/roles/entities/role.entity';
 import { RoleRepository } from 'src/modules/roles/repositories/role.repository';
 import { PermissionRepository } from 'src/modules/roles/repositories/permission.repository';
+import { LoggerModule } from 'src/lib/logger/logger.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Role, Permission])],
+  imports: [TypeOrmModule.forFeature([Role, Permission]), LoggerModule],
   controllers: [RolesController],
   providers: [RolesService, RoleRepository, PermissionRepository],
   exports: [RoleRepository, PermissionRepository],

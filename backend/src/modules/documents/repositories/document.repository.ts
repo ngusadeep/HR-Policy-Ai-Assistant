@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaseRepository } from 'src/common/repositories/base.repository';
-import { Document } from '../entities/document.entity';
+import { Document } from 'src/modules/documents/entities/document.entity';
 
 @Injectable()
 export class DocumentRepository extends BaseRepository<Document> {
@@ -13,14 +13,14 @@ export class DocumentRepository extends BaseRepository<Document> {
     super(documentRepository);
   }
 
-  async findAllWithUploader(): Promise<Document[]> {
+  findAllWithUploader(): Promise<Document[]> {
     return this.documentRepository.find({
       relations: ['uploadedBy'],
       order: { createdAt: 'DESC' },
     });
   }
 
-  async findByIdWithUploader(id: number): Promise<Document | null> {
+  findByIdWithUploader(id: number): Promise<Document | null> {
     return this.documentRepository.findOne({
       where: { id },
       relations: ['uploadedBy'],

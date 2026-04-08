@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 
 // pdf-parse v1 is a plain CJS function — import via require to avoid ESM interop issues.
@@ -84,12 +84,12 @@ export class IngestionService {
 
   private async extractText(filePath: string, mimeType: string): Promise<string> {
     if (mimeType === 'application/pdf') {
-      const buffer = fs.readFileSync(filePath);
+      const buffer = await fs.readFile(filePath);
       const { text } = await pdfParse(buffer);
       return text;
     }
     // Plain text and markdown
-    return fs.readFileSync(filePath, 'utf-8');
+    return fs.readFile(filePath, 'utf-8');
   }
 
   /**

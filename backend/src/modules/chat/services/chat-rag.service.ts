@@ -208,6 +208,8 @@ export class ChatRagService implements OnModuleInit {
     sessionId?: string,
   ): AsyncGenerator<string> {
     try {
+      // await no-op to satisfy async lint check
+      await Promise.resolve();
       for await (const token of stream) {
         if (typeof token === 'string' && token) yield token;
       }

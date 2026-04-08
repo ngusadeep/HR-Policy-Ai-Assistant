@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from 'src/modules/users/users.service';
 import { CreateUserDto } from 'src/modules/users/dto/create-user.dto';
@@ -19,10 +20,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { UserResponseDto } from 'src/modules/users/dto/responses/user.response.dto';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
+import { PermissionsGuard } from 'src/modules/auth/guards/permissions.guard';
 
 @ApiTags('Users')
 @ApiBearerAuth('JWT')
 @Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

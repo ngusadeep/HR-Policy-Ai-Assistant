@@ -40,7 +40,7 @@ export class EmbeddingsService implements OnModuleInit {
    * Embed a list of text chunks in one batched API call.
    * Returns a vector (number[]) for each input string.
    */
-  async embedDocuments(texts: string[]): Promise<number[][]> {
+  embedDocuments(texts: string[]): Promise<number[][]> {
     return this.embeddings.embedDocuments(texts);
   }
 

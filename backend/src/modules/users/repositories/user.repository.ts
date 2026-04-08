@@ -18,19 +18,19 @@ export class UserRepository extends BaseRepository<User> {
    * Always merges data into a proper entity instance so that
    * @BeforeInsert / @BeforeUpdate hooks (e.g. password hashing) fire.
    */
-  override async save(data: DeepPartial<User>): Promise<User> {
+  override save(data: DeepPartial<User>): Promise<User> {
     const entity = this.userRepository.create(data);
     return this.userRepository.save(entity);
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { email },
       relations: ['role', 'role.permissions'],
     });
   }
 
-  async findByIdWithRole(id: number): Promise<User | null> {
+  findByIdWithRole(id: number): Promise<User | null> {
     return this.userRepository.findOne({
       where: { id },
       relations: ['role', 'role.permissions'],

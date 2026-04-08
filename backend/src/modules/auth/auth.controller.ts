@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { LoginDto } from 'src/modules/auth/dto/login.dto';
@@ -15,12 +15,16 @@ import type { AuthUser as AuthUserPayload } from 'src/modules/auth/interfaces/au
 import { LoginResponseDto } from 'src/modules/auth/dto/responses/login.response.dto';
 import { ChangePasswordDto } from 'src/modules/auth/dto/change-password.dto';
 import { UpdateProfileDto } from 'src/modules/auth/dto/update-profile.dto';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
+import { PermissionsGuard } from 'src/modules/auth/guards/permissions.guard';
 
 @ApiTags('Auth')
 @ApiBearerAuth('JWT')
 @Controller('auth')
 // Stricter rate limit on auth endpoints: max 10 attempts/minute per IP
 @Throttle({ medium: { ttl: 60_000, limit: 10 } })
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

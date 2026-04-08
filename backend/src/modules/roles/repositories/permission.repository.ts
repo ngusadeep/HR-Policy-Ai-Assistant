@@ -13,11 +13,11 @@ export class PermissionRepository extends BaseRepository<Permission> {
     super(permissionRepository);
   }
 
-  async findByName(name: string): Promise<Permission | null> {
+  findByName(name: string): Promise<Permission | null> {
     return this.permissionRepository.findOne({ where: { name } });
   }
 
-  async findByNames(names: string[]): Promise<Permission[]> {
+  findByNames(names: string[]): Promise<Permission[]> {
     if (!names.length) {
       return [];
     }

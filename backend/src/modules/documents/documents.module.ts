@@ -16,6 +16,5 @@ import { UsersModule } from 'src/modules/users/users.module';
   ],
   providers: [DocumentRepository, IngestionService, DocumentsService],
   controllers: [DocumentsController],
-  exports: [DocumentsService, IngestionService],
 })
 export class DocumentsModule {}

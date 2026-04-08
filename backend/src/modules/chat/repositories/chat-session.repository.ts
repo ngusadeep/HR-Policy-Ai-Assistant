@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ChatSession } from '../entities/chat-session.entity';
-import { Message } from '../entities/message.entity';
+import { ChatSession } from 'src/modules/chat/entities/chat-session.entity';
+import { Message } from 'src/modules/chat/entities/message.entity';
 import type { User } from 'src/modules/users/entities/user.entity';
 
 @Injectable()
@@ -37,7 +37,7 @@ export class ChatSessionRepository {
     await this.messageRepo.save(entities);
   }
 
-  async getHistory(sessionId: string): Promise<Message[]> {
+  getHistory(sessionId: string): Promise<Message[]> {
     return this.messageRepo.find({
       where: { session: { id: sessionId } },
       order: { createdAt: 'ASC' },

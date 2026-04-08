@@ -21,10 +21,14 @@ import { ChatSessionRepository } from './repositories/chat-session.repository';
 /** Active stream tasks — keyed by sessionId so we can cancel. */
 const activeTasks = new Map<string, { cancelled: boolean }>();
 
-function send(client: WebSocket, data: object): void {
-  if (client.readyState === 1 /* OPEN */) {
-    client.send(JSON.stringify(data));
-  }
+async function send(client: WebSocket, data: object): Promise<void> {
+  if (client.readyState !== 1 /* OPEN */) return;
+  await new Promise<void>((resolve, reject) => {
+    client.send(JSON.stringify(data), (err?: Error) => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
 }
 
 @WebSocketGateway({
@@ -85,7 +89,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         validateResult = this.guardrails.validateInput(lastUser.content, sessionId);
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Invalid input.';
-        send(client, { type: 'error', sessionId, message: msg });
+        await send(client, { type: 'error', sessionId, message: msg });
         return;
       }
 
@@ -98,17 +102,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           for await (const token of greetingStream) {
             const safe = this.guardrails.scrubOutput(token, sessionId);
             greetingTokens.push(safe);
-            send(client, { type: 'token', sessionId, text: safe });
+            await send(client, { type: 'token', sessionId, text: safe });
           }
 
-          send(client, { type: 'done', sessionId });
+          await send(client, { type: 'done', sessionId });
 
           const greetingContent = greetingTokens.join('');
           const sessionRecord = await this.chatSessionRepo
             .findOrCreate(sessionId, null, collection)
             .catch(() => null);
           if (sessionRecord) {
-            this.chatSessionRepo
+            void this.chatSessionRepo
               .appendMessages(sessionRecord, [
                 { role: 'user', content: lastUser.content },
                 { role: 'assistant', content: greetingContent },
@@ -119,7 +123,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           }
         } catch (err) {
           this.logger.error('Greeting stream error', err);
-          send(client, { type: 'error', sessionId, message: 'An error occurred. Please try again.' });
+          await send(client, { type: 'error', sessionId, message: 'An error occurred. Please try again.' });
         }
         return;
       }
@@ -148,11 +152,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (sources.length === 0) {
         this.logger.warn({ message: 'No context chunks — skipping LLM, sending fallback', sessionId });
         const fallback = 'I could not find a reliable answer in the uploaded HR documents.';
-        send(client, { type: 'token', sessionId, text: fallback });
-        send(client, { type: 'done', sessionId });
+        await send(client, { type: 'token', sessionId, text: fallback });
+        await send(client, { type: 'done', sessionId });
 
         if (sessionRecord && lastUser) {
-          this.chatSessionRepo
+          void this.chatSessionRepo
             .appendMessages(sessionRecord, [
               { role: 'user', content: lastUser.content },
               { role: 'assistant', content: fallback },
@@ -172,18 +176,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // ── L7: scrub PII from each token before it reaches the client ────────
         const safe = this.guardrails.scrubOutput(token, sessionId);
         assistantTokens.push(safe);
-        send(client, { type: 'token', sessionId, text: safe });
+        await send(client, { type: 'token', sessionId, text: safe });
       }
 
       if (!task.cancelled) {
-        send(client, { type: 'sources', sessionId, sources });
-        send(client, { type: 'done', sessionId });
+        await send(client, { type: 'sources', sessionId, sources });
+        await send(client, { type: 'done', sessionId });
 
         const assistantContent = assistantTokens.join('');
 
         // Persist user message + assistant response in DB (fire-and-forget)
         if (sessionRecord && lastUser) {
-          this.chatSessionRepo
+          void this.chatSessionRepo
             .appendMessages(sessionRecord, [
               { role: 'user', content: lastUser.content },
               { role: 'assistant', content: assistantContent },
@@ -195,7 +199,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         // ── L6 post-stream: async grounding check for observability ──────────
         // Runs after the stream is delivered — does not block the client response.
-        this.guardrails
+        void this.guardrails
           .checkGrounding(assistantContent, sources, sessionId)
           .then((result) => {
             if (!result.grounded) {
@@ -215,7 +219,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred.';
       this.logger.error(`Chat error for session ${sessionId}:`, err);
-      send(client, { type: 'error', sessionId, message });
+      await send(client, { type: 'error', sessionId, message });
     } finally {
       activeTasks.delete(sessionId);
     }

@@ -7,11 +7,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UsersService } from 'src/modules/users/users.service';
-import type { LoginDto } from '../dto/login.dto';
-import type { RegisterDto } from '../dto/register.dto';
-import type { ForgotPasswordDto } from '../dto/forgot-password.dto';
-import type { ChangePasswordDto } from '../dto/change-password.dto';
-import type { UpdateProfileDto } from '../dto/update-profile.dto';
+import type { LoginDto } from 'src/modules/auth/dto/login.dto';
+import type { RegisterDto } from 'src/modules/auth/dto/register.dto';
+import type { ForgotPasswordDto } from 'src/modules/auth/dto/forgot-password.dto';
+import type { ChangePasswordDto } from 'src/modules/auth/dto/change-password.dto';
+import type { UpdateProfileDto } from 'src/modules/auth/dto/update-profile.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UserStatus } from 'src/modules/users/entities/user.entity';
 import { ConfigService } from '@nestjs/config';

@@ -6,7 +6,7 @@ import type { WebSocket } from 'ws';
 export class WsExceptionFilter extends BaseWsExceptionFilter {
   private readonly logger = new Logger(WsExceptionFilter.name);
 
-  catch(exception: unknown, host: ArgumentsHost): void {
+  async catch(exception: unknown, host: ArgumentsHost): Promise<void> {
     const client = host.switchToWs().getClient<WebSocket>();
     const message =
       exception instanceof WsException
@@ -21,8 +21,19 @@ export class WsExceptionFilter extends BaseWsExceptionFilter {
     const safeMessage =
       exception instanceof WsException ? String(message) : 'An error occurred. Please try again.';
 
-    if (client.readyState === 1 /* OPEN */) {
-      client.send(JSON.stringify({ type: 'error', message: safeMessage }));
-    }
+    await this.safeSend(client, { type: 'error', message: safeMessage });
+  }
+
+  private async safeSend(client: WebSocket, payload: object): Promise<void> {
+    if (client.readyState !== 1 /* OPEN */) return;
+    await new Promise<void>((resolve, reject) => {
+      client.send(JSON.stringify(payload), err => {
+        if (err) {
+          this.logger.warn('Failed to send WS error message', err);
+          return reject(err);
+        }
+        resolve();
+      });
+    });
   }
 }

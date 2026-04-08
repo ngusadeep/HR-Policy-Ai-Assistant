@@ -47,6 +47,5 @@ import { PermissionsGuard } from 'src/modules/auth/guards/permissions.guard';
     },
   ],
   controllers: [AuthController],
-  exports: [JwtModule],
 })
 export class AuthModule {}

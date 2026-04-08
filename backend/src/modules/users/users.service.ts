@@ -44,11 +44,11 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findByEmail(email);
+    return await this.userRepository.findByEmail(email);
   }
 
   async findById(id: number): Promise<User | null> {
-    return this.userRepository.findByIdWithRole(id);
+    return await this.userRepository.findByIdWithRole(id);
   }
 
   async update(

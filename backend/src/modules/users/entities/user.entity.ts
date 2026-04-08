@@ -5,9 +5,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Role } from 'src/modules/roles/entities/role.entity';
-import { BasicEntity } from 'src/common/entities/base.entity';
 import * as crypto from 'crypto';
 
 export enum UserGender {
@@ -23,7 +25,24 @@ export enum UserStatus {
 }
 
 @Entity('users')
-export class User extends BasicEntity {
+export class User {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
+
+  @CreateDateColumn({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+    name: 'created_at',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+    name: 'updated_at',
+  })
+  updatedAt: Date;
+
   @Column({ length: 100, name: 'first_name' })
   firstName: string;
 
@@ -65,7 +84,7 @@ export class User extends BasicEntity {
     }
   }
   async #hashPassword(password: string): Promise<string> {
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       const salt = crypto.randomBytes(16).toString('hex');
       crypto.scrypt(password, salt, 64, (err, derivedKey) => {
         if (err) reject(err);
@@ -80,11 +99,15 @@ export class User extends BasicEntity {
       return false;
     }
 
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       crypto.scrypt(candidatePassword, salt, 64, (err, derivedKey) => {
         if (err) reject(err);
         resolve(storedHash === derivedKey.toString('hex'));
       });
     });
+  }
+
+  mergeData<T>(data: T): this & T {
+    return Object.assign(this as any, data);
   }
 }

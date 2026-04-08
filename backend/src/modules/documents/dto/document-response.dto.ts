@@ -1,4 +1,4 @@
-import type { Document } from '../entities/document.entity';
+import type { Document } from 'src/modules/documents/entities/document.entity';
 
 export class DocumentResponseDto {
   id: number;

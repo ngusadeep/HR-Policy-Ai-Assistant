@@ -42,7 +42,7 @@ export class GuardrailsService {
    * Designed to be called asynchronously after streaming completes (fire-and-forget).
    * Results feed LangSmith observability and DB analytics — they do not block the stream.
    */
-  async checkGrounding(
+  checkGrounding(
     assembledResponse: string,
     chunks: GuardedChunk[],
     sessionId?: string,

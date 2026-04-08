@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { RolesService } from 'src/modules/roles/roles.service';
 import { UpdateRoleDto } from 'src/modules/roles/dto/update-role.dto';
@@ -17,10 +18,14 @@ import {
 } from '@nestjs/swagger';
 import { CreateRoleDto } from 'src/modules/roles/dto/create-role.dto';
 import { RoleResponseDto } from 'src/modules/roles/dto/responses/role.response.dto';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
+import { PermissionsGuard } from 'src/modules/auth/guards/permissions.guard';
 
 @ApiTags('Roles')
 @ApiBearerAuth('JWT')
 @Controller('roles')
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 

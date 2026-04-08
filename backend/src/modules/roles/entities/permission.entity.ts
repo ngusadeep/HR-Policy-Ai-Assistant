@@ -1,9 +1,11 @@
-import { Entity, Column, ManyToMany } from 'typeorm';
+import { Entity, Column, ManyToMany, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Role } from 'src/modules/roles/entities/role.entity';
-import { BasicEntity } from 'src/common/entities/base.entity';
 
 @Entity('permissions')
-export class Permission extends BasicEntity {
+export class Permission {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
+
   @Column({ length: 100 })
   name: string;
 
@@ -11,4 +13,18 @@ export class Permission extends BasicEntity {
     cascade: ['insert', 'update'],
   })
   roles: Role[];
+
+  @CreateDateColumn({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+    name: 'created_at',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+    name: 'updated_at',
+  })
+  updatedAt: Date;
 }

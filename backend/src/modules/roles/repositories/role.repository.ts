@@ -13,18 +13,18 @@ export class RoleRepository extends BaseRepository<Role> {
     super(roleRepository);
   }
 
-  async findByName(name: string): Promise<Role | null> {
+  findByName(name: string): Promise<Role | null> {
     return this.roleRepository.findOne({ where: { name } });
   }
 
-  async findByNames(names: string[]): Promise<Role[]> {
+  findByNames(names: string[]): Promise<Role[]> {
     return this.roleRepository.find({
       where: { name: In(names) },
       relations: ['permissions'],
     });
   }
 
-  async findOneWithPermissions(id: number): Promise<Role | null> {
+  findOneWithPermissions(id: number): Promise<Role | null> {
     return this.roleRepository.findOne({
       where: { id },
       relations: ['permissions'],

@@ -10,6 +10,7 @@ import {
   Query,
   UploadedFile,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -27,6 +28,9 @@ import { DocumentResponseDto } from './dto/document-response.dto';
 import { AuthUser } from 'src/modules/auth/decorator/auth-user.decorator';
 import type { AuthUser as AuthUserPayload } from 'src/modules/auth/interfaces/auth-user.interface';
 import { UsersService } from 'src/modules/users/users.service';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
+import { PermissionsGuard } from 'src/modules/auth/guards/permissions.guard';
 
 const ALLOWED_MIME_TYPES = ['application/pdf', 'text/plain', 'text/markdown'];
 const MAX_FILE_SIZE_MB = 20;
@@ -34,6 +38,7 @@ const MAX_FILE_SIZE_MB = 20;
 @ApiTags('Documents')
 @ApiBearerAuth('JWT')
 @Controller('documents')
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 export class DocumentsController {
   constructor(
     private readonly documentsService: DocumentsService,

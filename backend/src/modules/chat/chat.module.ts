@@ -24,6 +24,5 @@ import { ChatSessionRepository } from './repositories/chat-session.repository';
     }),
   ],
   providers: [ChatGateway, ChatRagService, ChatSessionRepository],
-  exports: [ChatSessionRepository],
 })
 export class ChatModule {}
