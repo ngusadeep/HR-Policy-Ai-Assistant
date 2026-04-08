@@ -41,33 +41,34 @@ streamChat(dto: SendMessageDto): Observable<string> {
 }
 ```
 
-### 3. Batch Qdrant operations
+### 3. Batch Chroma operations
 ```typescript
-// BEFORE (N individual upserts)
+// BEFORE (adding chunks one-by-one)
 for (const chunk of chunks) {
-  await this.qdrant.upsert(collection, { points: [chunk] });
+  await this.chromaService.addDocuments([{ text: chunk.text, metadata: chunk.meta }], [chunk.id]);
 }
 
-// AFTER (single batched upsert)
-await this.qdrant.upsert(collection, {
-  points: chunks,
-  wait: true,
-});
+// AFTER (single batched addDocuments call)
+await this.chromaService.addDocuments(
+  chunks.map(c => ({ text: c.text, metadata: c.meta })),
+  chunks.map(c => c.id),
+  collection,
+);
 ```
 
 ### 4. LangSmith tracing wrapper
 ```typescript
 // BEFORE (no tracing)
-async retrieve(query: string, tenantId: string) {
-  const vector = await this.embedding.embedQuery(query);
-  return this.qdrant.search(collection, vector, { filter });
+async retrieve(query: string) {
+  const vector = await this.embeddingsService.embedQuery(query);
+  return this.chromaService.searchByVector(vector, 6, collection);
 }
 
 // AFTER (wrapped in traceable)
 retrieve = traceable(
-  async (query: string, tenantId: string) => {
-    const vector = await this.embedding.embedQuery(query);
-    return this.qdrant.search(collection, vector, { filter });
+  async (query: string) => {
+    const vector = await this.embeddingsService.embedQuery(query);
+    return this.chromaService.searchByVector(vector, 6, collection);
   },
   { name: 'retriever', project_name: process.env.LANGCHAIN_PROJECT }
 );
@@ -99,7 +100,7 @@ await this.dataSource.transaction(async manager => {
 ## Code Smells to Flag
 - `any` types in service method signatures → replace with typed DTOs
 - `console.log` in production code → replace with `Logger` from `@nestjs/common`
-- `Promise.all` on Qdrant upserts in a loop → batch instead
+- `addDocuments` calls in a loop → batch into a single call instead
 - Hardcoded collection names or model names → move to `ConfigService`
 - Missing `try/catch` around LLM calls → always handle provider errors
 - `chain.call()` or `chain.run()` (LangChain v0.1 API) → migrate to LCEL

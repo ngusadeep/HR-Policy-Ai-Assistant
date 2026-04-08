@@ -5,8 +5,7 @@ import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 // pdf-parse v1 is a plain CJS function — import via require to avoid ESM interop issues.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse: (buf: Buffer) => Promise<{ text: string }> = require('pdf-parse');
-import { EmbeddingsService } from 'src/modules/ai/services/embeddings.service';
-import { QdrantService, type QdrantPoint } from 'src/modules/ai/services/qdrant.service';
+import { ChromaService } from 'src/modules/ai/services/chroma.service';
 
 export interface IngestionResult {
   chunkCount: number;
@@ -25,19 +24,17 @@ export class IngestionService {
     separators: ['\n\n', '\n', '. ', ' ', ''],
   });
 
-  constructor(
-    private readonly embeddingsService: EmbeddingsService,
-    private readonly qdrantService: QdrantService,
-  ) {}
+  constructor(private readonly chromaService: ChromaService) {}
 
   /**
-   * Full ingestion pipeline: read file → extract text → split → embed → upsert.
+   * Full ingestion pipeline: read file → extract text → split → add to Chroma.
+   * Chroma handles embedding internally via OpenAIEmbeddings (configured in ChromaService).
    *
-   * @param filePath  Absolute path to the uploaded file on disk.
-   * @param mimeType  MIME type used to choose the parser.
-   * @param documentId  DB id used as Qdrant payload for later deletion.
-   * @param collection  Qdrant collection name.
-   * @param sourceName  Original filename stored in each chunk's payload.
+   * @param filePath    Absolute path to the uploaded file on disk.
+   * @param mimeType    MIME type used to choose the text extractor.
+   * @param documentId  DB id stored in each chunk's metadata for later deletion.
+   * @param collection  Chroma collection name.
+   * @param sourceName  Original filename stored in each chunk's metadata.
    */
   async ingest(
     filePath: string,
@@ -56,44 +53,31 @@ export class IngestionService {
     const chunks = await this.splitter.splitText(text);
     this.logger.log(`Document ${documentId}: ${chunks.length} chunks from "${sourceName}"`);
 
-    // 3. Embed in batches of 100 (OpenAI rate-limit friendly)
-    const BATCH = 100;
-    const points: QdrantPoint[] = [];
+    // 3. Build chunk objects with metadata and stable IDs
+    const docs = chunks.map((chunkText, index) => ({
+      text: chunkText,
+      metadata: {
+        documentId,
+        chunkIndex: index,
+        source: sourceName,
+      } as Record<string, unknown>,
+    }));
 
-    for (let i = 0; i < chunks.length; i += BATCH) {
-      const batch = chunks.slice(i, i + BATCH);
-      const vectors = await this.embeddingsService.embedDocuments(batch);
+    const ids = chunks.map((_, index) => this.chunkId(documentId, index));
 
-      for (let j = 0; j < batch.length; j++) {
-        const vector = vectors[j];
-        if (!vector) continue; // skip if embedding returned undefined
-        const globalIndex = i + j;
-        points.push({
-          id: this.pointId(documentId, globalIndex),
-          vector,
-          payload: {
-            documentId,
-            chunkIndex: globalIndex,
-            source: sourceName,
-            text: batch[j] ?? '',
-          },
-        });
-      }
-    }
+    // 4. Add to Chroma — embedding is handled by ChromaService internally
+    await this.chromaService.addDocuments(docs, ids, collection);
+    this.logger.log(`Document ${documentId}: added ${docs.length} chunks to "${collection}"`);
 
-    // 4. Upsert into Qdrant
-    await this.qdrantService.upsert(points, collection);
-    this.logger.log(`Document ${documentId}: upserted ${points.length} vectors into "${collection}"`);
-
-    return { chunkCount: points.length };
+    return { chunkCount: docs.length };
   }
 
   /**
-   * Remove all Qdrant vectors for a given document.
+   * Remove all Chroma chunks for a given document.
    */
   async deleteFromVectorStore(documentId: number, collection: string): Promise<void> {
-    await this.qdrantService.deleteByDocumentId(documentId, collection);
-    this.logger.log(`Document ${documentId}: vectors deleted from "${collection}"`);
+    await this.chromaService.deleteByDocumentId(documentId, collection);
+    this.logger.log(`Document ${documentId}: chunks deleted from "${collection}"`);
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
@@ -104,17 +88,14 @@ export class IngestionService {
       const { text } = await pdfParse(buffer);
       return text;
     }
-
     // Plain text and markdown
     return fs.readFileSync(filePath, 'utf-8');
   }
 
   /**
-   * Generate a stable numeric Qdrant point ID from document id + chunk index.
-   * Qdrant accepts 64-bit unsigned ints; we combine both values.
+   * Stable string chunk ID — ChromaDB requires string IDs.
    */
-  private pointId(documentId: number, chunkIndex: number): number {
-    // Keep it within 53-bit JS safe integer range: documentId * 1_000_000 + chunkIndex
-    return documentId * 1_000_000 + chunkIndex;
+  private chunkId(documentId: number, chunkIndex: number): string {
+    return `doc-${documentId}-chunk-${chunkIndex}`;
   }
 }

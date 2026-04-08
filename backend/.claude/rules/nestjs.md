@@ -17,7 +17,7 @@ Always follow these patterns when writing NestJS code for this project.
 - All services are singleton scope (`DEFAULT`). Document any deviation.
 - Inject `Logger` from `@nestjs/common` — `private readonly logger = new Logger(ServiceName.name)`.
 - Use `this.config.getOrThrow<string>('KEY')` — this throws at startup if missing, not at runtime.
-- Wrap external calls (Qdrant, LLM APIs) in try/catch and throw NestJS `HttpException` or custom exceptions.
+- Wrap external calls (Chroma, LLM APIs) in try/catch and throw NestJS `HttpException` or custom exceptions.
 
 ## DTOs
 ```typescript

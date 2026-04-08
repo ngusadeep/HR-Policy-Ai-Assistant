@@ -29,10 +29,9 @@ grep -n "streamChat\|sendMessage" src/modules/chat/chat.service.ts |
 
 ### L3 — Retriever Guard
 ```bash
-# Find any qdrant.search() calls without a tenantId filter
-grep -rn "\.search(" src/ --include="*.ts" |
-  grep -v "tenantId\|filter"
-# Every hit is a CRITICAL security bug
+# Find any searchByVector() calls without a score threshold override
+grep -rn "searchByVector(" src/ --include="*.ts"
+# Verify each call uses the default threshold from RAG_SCORE_THRESHOLD
 ```
 
 ### L4 — Context Guard
@@ -80,8 +79,8 @@ grep -rn "@Post\|@Sse" src/modules/chat --include="*.ts" |
 
 ### CRITICAL (fix immediately)
 - [L3] src/modules/rag/retriever.service.ts:47
-  Qdrant search missing tenantId filter
-  Fix: add filter: { must: [{ key: 'tenantId', match: { value: tenantId } }] }
+  Chroma search bypassing score threshold (threshold=0)
+  Fix: remove explicit 0 threshold, use RAG_SCORE_THRESHOLD from config
 
 ### HIGH (fix before next deploy)
 - [L1] src/modules/chat/chat.controller.ts:23

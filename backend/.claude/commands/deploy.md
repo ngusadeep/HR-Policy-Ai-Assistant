@@ -39,7 +39,7 @@ Never deploy without running migrations first: `npm run migration:run`
 Verify these are set in production:
 - `DATABASE_URL`
 - `REDIS_URL`
-- `QDRANT_URL` + `QDRANT_COLLECTION`
+- `CHROMA_URL` + `CHROMA_COLLECTION`
 - `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`
 - `LANGCHAIN_API_KEY` + `LANGCHAIN_PROJECT`
 - `JWT_SECRET`

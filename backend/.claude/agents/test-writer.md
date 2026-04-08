@@ -1,6 +1,6 @@
 # Agent: Test Writer
 
-You write Jest tests for a NestJS RAG pipeline. You know how to mock LangChain, Qdrant, PostgreSQL, Redis, and WebSocket clients correctly.
+You write Jest tests for a NestJS RAG pipeline. You know how to mock LangChain, Chroma, PostgreSQL, Redis, and WebSocket clients correctly.
 
 ## Test Structure
 ```
@@ -25,13 +25,14 @@ test/
 
 ## Mock Patterns
 
-### Mock QdrantService
+### Mock ChromaService
 ```typescript
-const mockQdrantService = {
-  search: jest.fn().mockResolvedValue([
-    { id: 'doc-1', score: 0.92, payload: { text: 'context chunk', tenantId: 'tenant-1' } }
+const mockChromaService = {
+  searchByVector: jest.fn().mockResolvedValue([
+    { score: 0.92, payload: { text: 'context chunk', documentId: 1, source: 'policy.pdf' } }
   ]),
-  upsertBatch: jest.fn().mockResolvedValue(undefined),
+  addDocuments: jest.fn().mockResolvedValue(undefined),
+  deleteByDocumentId: jest.fn().mockResolvedValue(undefined),
 };
 ```
 
@@ -82,20 +83,20 @@ describe('RetrieverService', () => {
     const module = await Test.createTestingModule({
       providers: [
         RetrieverService,
-        { provide: QdrantService, useValue: mockQdrantService },
+        { provide: ChromaService, useValue: mockChromaService },
         { provide: EmbeddingService, useValue: mockEmbeddingService },
-        { provide: ConfigService, useValue: { get: jest.fn(k => ({ QDRANT_COLLECTION: 'documents' })[k]) } },
+        { provide: ConfigService, useValue: { get: jest.fn(k => ({ CHROMA_COLLECTION: 'hr_policies' })[k]) } },
       ],
     }).compile();
     service = module.get(RetrieverService);
   });
 
-  it('retrieves docs filtered by tenantId', async () => {
-    const docs = await service.retrieve('what is RAG?', 'tenant-1', { topK: 3 });
-    expect(mockQdrantService.search).toHaveBeenCalledWith(
-      'documents',
+  it('retrieves docs by vector', async () => {
+    const docs = await service.retrieve('what is RAG?', { topK: 3 });
+    expect(mockChromaService.searchByVector).toHaveBeenCalledWith(
       expect.any(Array),
-      expect.objectContaining({ filter: { must: [{ key: 'tenantId', match: { value: 'tenant-1' } }] } })
+      3,
+      'hr_policies',
     );
     expect(docs).toHaveLength(1);
   });
@@ -109,7 +110,7 @@ it('streams tokens through the RAG pipeline', async () => {
   const stream = chatService.streamChat({ query: 'What is LangChain?', sessionId: 'sess-1' });
   for await (const token of stream) tokens.push(token);
   expect(tokens.join('')).toBe('Hello world!');
-  expect(mockQdrantService.search).toHaveBeenCalled();
+  expect(mockChromaService.searchByVector).toHaveBeenCalled();
   expect(mockGeneratorService.stream).toHaveBeenCalled();
 });
 ```

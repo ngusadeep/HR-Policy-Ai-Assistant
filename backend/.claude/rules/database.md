@@ -1,4 +1,4 @@
-# Rules: Database (PostgreSQL + Qdrant)
+# Rules: Database (PostgreSQL + Chroma)
 
 ## PostgreSQL / TypeORM
 
@@ -57,50 +57,40 @@ const sessions = await this.sessionRepo
   .getMany();
 ```
 
-## Qdrant
+## Chroma
 
 ### Collection Setup
-```typescript
-// Always create collection with explicit config
-await qdrantClient.createCollection(collectionName, {
-  vectors: {
-    size: this.config.getOrThrow<number>('EMBEDDING_DIMENSIONS'),
-    distance: 'Cosine',
-  },
-  optimizers_config: { default_segment_number: 2 },
-  replication_factor: 1,
-});
-```
+Collections are created automatically by `ChromaService.getStore()` with cosine distance.
+No manual collection creation needed — `getOrCreateCollection` handles it.
 
-### Upsert Pattern
+### Add Documents Pattern
 ```typescript
-// Always batch — never single-point upsert in a loop
-await qdrantClient.upsert(collectionName, {
-  wait: true,
-  points: chunks.map((chunk, i) => ({
-    id: uuidv4(),
-    vector: vectors[i],
-    payload: {
-      text: chunk.text,
-      tenantId: chunk.tenantId,       // MANDATORY
-      documentId: chunk.documentId,
-      chunkIndex: chunk.index,
-      metadata: chunk.metadata,
+// Always use addDocuments() — Chroma embeds internally via OpenAIEmbeddings
+await chromaService.addDocuments(
+  chunks.map((c, i) => ({
+    text: c.text,
+    metadata: {
+      documentId: c.documentId,
+      chunkIndex: i,
+      source: c.sourceName,
     },
   })),
-});
+  chunks.map((_, i) => `doc-${documentId}-chunk-${i}`),
+  collectionName,
+);
 ```
 
 ### Search Pattern
 ```typescript
-// Always include tenantId filter
-const results = await qdrantClient.search(collectionName, {
-  vector: queryVector,
-  limit: topK,
-  score_threshold: scoreThreshold,
-  filter: {
-    must: [{ key: 'tenantId', match: { value: tenantId } }],
-  },
-  with_payload: true,
-});
+// Pass pre-computed vector from EmbeddingsService (has in-memory cache)
+const queryVector = await embeddingsService.embedQuery(query);
+const results = await chromaService.searchByVector(queryVector, topK, collectionName);
+// results: Array<{ payload: Record<string, unknown>; score: number }>
+// score is cosine similarity in [0, 1] — higher is more relevant
+```
+
+### Delete Pattern
+```typescript
+// Delete all chunks for a document by metadata filter
+await chromaService.deleteByDocumentId(documentId, collectionName);
 ```

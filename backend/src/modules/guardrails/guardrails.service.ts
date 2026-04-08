@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InputGuard } from './guards/input.guard';
+import { InputGuard, type ValidateResult } from './guards/input.guard';
 import { ContextGuard, type GuardedChunk } from './guards/context.guard';
 import { PromptGuard } from './guards/prompt.guard';
 import { ResponseFilter } from './filters/response.filter';
@@ -17,9 +17,13 @@ export class GuardrailsService {
     private readonly outputGuard: OutputGuard,
   ) {}
 
-  /** L1 — validate user input before it enters the pipeline. Throws WsException on violation. */
-  validateInput(query: string, sessionId?: string): void {
-    this.inputGuard.validate(query, sessionId);
+  /**
+   * L1 — validate user input before it enters the pipeline.
+   * Returns { isGreeting: true } when the input is a simple greeting (caller must skip RAG).
+   * Throws WsException on any policy violation.
+   */
+  validateInput(query: string, sessionId?: string): ValidateResult {
+    return this.inputGuard.validate(query, sessionId);
   }
 
   /** L4 + L5 — enforce token budget, then build a safe XML-fenced context string. */

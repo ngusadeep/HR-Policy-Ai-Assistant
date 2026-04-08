@@ -50,12 +50,12 @@ services:
       NODE_ENV: production
       DB_HOST: postgres
       DB_PORT: 5432
-      QDRANT_URL: http://qdrant:6333
+      CHROMA_URL: http://chroma:8000
     expose:
       - "3000"
     depends_on:
       - postgres
-      - qdrant
+      - chroma
 
   postgres:
     container_name: postgres
@@ -71,27 +71,23 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
-  qdrant:
-    container_name: qdrant
+  chroma:
+    container_name: chroma
     <<: *common-service
-    image: qdrant/qdrant:v1.17.1
+    image: chromadb/chroma:latest
     expose:
-      - "6333"
+      - "8000"
     volumes:
-      - qdrant_data:/qdrant/storage
-
+      - chroma_data:/chroma/chroma
+    
 volumes:
   frontend_dist:
     name: hr-assistant-frontend-dist
   postgres_data:
     name: hr-assistant-postgres
-  qdrant_data:
-    name: hr-assistant-qdrant
+  chroma_data:
+    name: hr-assistant-chroma
 
 networks:
   app-network:

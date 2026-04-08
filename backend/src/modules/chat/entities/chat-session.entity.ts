@@ -16,7 +16,7 @@ export class ChatSession {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  /** Qdrant collection this session queries against. */
+  /** Chroma collection this session queries against. */
   @Column({ default: 'hr_policies' })
   collection: string;
 

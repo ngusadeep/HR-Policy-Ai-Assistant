@@ -2,7 +2,7 @@
 name: hr-rag-guardrails
 description: >
   Implement production-grade guardrails and system prompts for an HR Policy RAG assistant
-  built with LangChain JS, Qdrant, and OpenAI on a NestJS backend. Use this skill whenever
+  built with LangChain JS, Chroma, and OpenAI on a NestJS backend. Use this skill whenever
   building or improving safety layers for a RAG chatbot — input validation, prompt injection
   defense, grounding verification, citation enforcement, fallback handling, or system prompt
   construction. Also triggers for: "add guardrails to my RAG", "system prompt for HR assistant",
@@ -30,7 +30,7 @@ User question
      │ (blocked → short-circuit, skip layers 2–4)
      ▼
 ┌──────────────────────────┐
-│  Layer 2 — Retrieval     │  Existing pipeline (embed → Qdrant search)
+│  Layer 2 — Retrieval     │  Existing pipeline (embed → Chroma search)
 └──────────────────────────┘
      │
      ▼
@@ -552,9 +552,8 @@ OPENAI_API_KEY=
 OPENAI_CHAT_MODEL=gpt-4o-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 
-QDRANT_URL=
-QDRANT_API_KEY=
-QDRANT_COLLECTION=hr_policy_chunks
+CHROMA_URL=http://localhost:8000
+CHROMA_COLLECTION=hr_policies
 
 LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=
@@ -572,7 +571,7 @@ LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
 | Question > 1000 chars | 1 | Block |
 | Prompt injection pattern detected | 1 | Block, do not acknowledge attempt |
 | Off-topic subject detected | 1 | Block with scope explanation |
-| No chunks retrieved from Qdrant | 4 | Force fallback |
+| No chunks retrieved from Chroma | 4 | Force fallback |
 | Answer generated but citations empty | 4 | Force fallback |
 | Grounding verifier returns UNGROUNDED | 4 | Force fallback |
 | Grounding verifier call fails | 4 | Force fallback (fail safe) |

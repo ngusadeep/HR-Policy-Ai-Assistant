@@ -25,10 +25,10 @@ You are a senior NestJS engineer reviewing code for a production AI RAG pipeline
 - [ ] Clients join `socket.join(sessionId)` rooms — not broadcasting to all
 - [ ] Error events use `client.emit('error', { message })` — never throw inside handlers
 
-### Qdrant
-- [ ] Upserts use `upsertBatch()` — never single `upsert()` in a loop
-- [ ] Search always includes `filter: { must: [{ key: 'tenantId', match: { value } }] }`
-- [ ] Vector dimensions match `EMBEDDING_DIMENSIONS` env var
+### Chroma
+- [ ] Ingestion uses `addDocuments()` batch — never one chunk at a time in a loop
+- [ ] `searchByVector()` is called with a pre-computed vector from EmbeddingsService
+- [ ] `RAG_SCORE_THRESHOLD` is respected — never bypassed with `0`
 
 ### PostgreSQL / TypeORM
 - [ ] No `synchronize: true` in any config file

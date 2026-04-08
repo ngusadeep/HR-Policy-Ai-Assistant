@@ -14,8 +14,7 @@ must pass through the guardrails layer. No exceptions.
 - **Always** cap query length at `MAX_QUERY_LENGTH` (2000 chars) at the DTO level with `@MaxLength(2000)`.
 
 ### Retrieval
-- **Always** apply `scoreThreshold` — never return docs below `RAG_SCORE_THRESHOLD` (default 0.72).
-- **Always** filter Qdrant by `tenantId` — a missing filter is a **critical security bug**.
+- **Always** apply `scoreThreshold` — never return docs below `RAG_SCORE_THRESHOLD` (default 0.6).
 - **Always** handle the zero-docs case explicitly — never let the LLM generate with empty context.
 
 ### Prompt Construction
@@ -27,7 +26,7 @@ must pass through the guardrails layer. No exceptions.
 ### Output
 - **Always** run `ResponseFilter.scrubOutput()` on the final assembled response before persisting to DB.
 - **Always** log grounding check results to LangSmith — even if not blocking.
-- **Never** return LangSmith run IDs, internal error messages, stack traces, or Qdrant point IDs to the client.
+- **Never** return LangSmith run IDs, internal error messages, or stack traces to the client.
 - **Never** stream a response that failed the injection fence check — abort and emit `error` event.
 
 ### Rate Limiting
@@ -52,7 +51,6 @@ this.logger.warn({
   event: 'guardrail_triggered',
   layer: 'L1_input' | 'L2_classifier' | 'L3_retriever' | 'L5_prompt' | 'L6_grounding' | 'L7_output',
   userId,        // from JWT
-  tenantId,      // from JWT
   sessionId,
   reason: string,
   // NEVER log the raw query or response — only metadata
@@ -64,7 +62,7 @@ this.logger.warn({
 ## Environment Variables for Guardrails
 
 ```env
-RAG_SCORE_THRESHOLD=0.72        # Min Qdrant similarity score
+RAG_SCORE_THRESHOLD=0.6         # Min Chroma cosine similarity score
 MAX_QUERY_LENGTH=2000            # Hard cap on user input
 MAX_HISTORY_MESSAGES=20         # Max chat turns injected into prompt
 MAX_CONTEXT_TOKENS=6000         # Token budget for retrieved docs
@@ -84,14 +82,14 @@ const prompt = `Answer this: ${userQuery}`;
 // ✓ RIGHT — sanitized, fenced, and length-capped
 const prompt = this.promptGuard.buildSafePrompt(sanitizedQuery, safeContext);
 
-// ✗ WRONG — no tenantId filter
-const docs = await qdrant.search(collection, vector, { limit: 5 });
+// ✗ WRONG — no score threshold
+const results = await chromaService.searchByVector(vector, 5, collection, 0);
 
-// ✓ RIGHT — always filtered
-const docs = await qdrant.search(collection, vector, { limit: 5, filter: { must: [...] } });
+// ✓ RIGHT — threshold enforced via RAG_SCORE_THRESHOLD
+const results = await chromaService.searchByVector(vector, 5, collection);
 
 // ✗ WRONG — early return leaks internal state
-throw new Error(`Qdrant error: ${err.message} at collection ${collection}`);
+throw new Error(`Chroma error: ${err.message} at collection ${collection}`);
 
 // ✓ RIGHT — sanitized client-facing error
 throw new InternalServerErrorException('Unable to process your request. Please try again.');

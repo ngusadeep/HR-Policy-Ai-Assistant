@@ -19,7 +19,7 @@ gh pr diff $PR_NUMBER
 
 ### Correctness
 - Does the change solve the stated problem?
-- Are edge cases handled? (empty Qdrant results, LLM timeout, malformed WS payload)
+- Are edge cases handled? (empty Chroma results, LLM timeout, malformed WS payload)
 - Are all changed services covered by tests?
 
 ### Architecture
@@ -28,7 +28,7 @@ gh pr diff $PR_NUMBER
 - Are new LangChain chains using LCEL + `traceable()`?
 
 ### Performance
-- Any N+1 Qdrant upserts? Should be batched.
+- Any N+1 Chroma `addDocuments` calls in a loop? Should be a single batched call.
 - Any synchronous heavy operations in a WS message handler? Should be async.
 - Any missing Redis caching for repeated embedding calls?
 

@@ -80,12 +80,47 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // ── L1: Input guardrail — validate the latest user message ───────────────
     const lastUser = [...messages].reverse().find((m) => m.role === 'user');
     if (lastUser) {
+      let validateResult: { isGreeting: boolean };
       try {
-        this.guardrails.validateInput(lastUser.content, sessionId);
+        validateResult = this.guardrails.validateInput(lastUser.content, sessionId);
       } catch (err) {
-        // WsExceptionFilter will send the safe error message to the client
         const msg = err instanceof Error ? err.message : 'Invalid input.';
         send(client, { type: 'error', sessionId, message: msg });
+        return;
+      }
+
+      // Greetings bypass RAG — stream a natural LLM response with no retrieval.
+      if (validateResult.isGreeting) {
+        try {
+          const greetingStream = await this.chatRagService.streamGreeting(lastUser.content, sessionId);
+          const greetingTokens: string[] = [];
+
+          for await (const token of greetingStream) {
+            const safe = this.guardrails.scrubOutput(token, sessionId);
+            greetingTokens.push(safe);
+            send(client, { type: 'token', sessionId, text: safe });
+          }
+
+          send(client, { type: 'done', sessionId });
+
+          const greetingContent = greetingTokens.join('');
+          const sessionRecord = await this.chatSessionRepo
+            .findOrCreate(sessionId, null, collection)
+            .catch(() => null);
+          if (sessionRecord) {
+            this.chatSessionRepo
+              .appendMessages(sessionRecord, [
+                { role: 'user', content: lastUser.content },
+                { role: 'assistant', content: greetingContent },
+              ])
+              .catch((err: unknown) =>
+                this.logger.warn({ message: 'Could not persist greeting message', sessionId, err }),
+              );
+          }
+        } catch (err) {
+          this.logger.error('Greeting stream error', err);
+          send(client, { type: 'error', sessionId, message: 'An error occurred. Please try again.' });
+        }
         return;
       }
     }
@@ -112,8 +147,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // ── L6 pre-stream: if no chunks were retrieved, skip the LLM and send fallback ──
       if (sources.length === 0) {
         this.logger.warn({ message: 'No context chunks — skipping LLM, sending fallback', sessionId });
-        const fallback =
-          "Sorry, I can't help with that one! But if you have any questions about HR policies — like leave, benefits, conduct, or anything workplace-related — I'm happy to help with those!";
+        const fallback = 'I could not find a reliable answer in the uploaded HR documents.';
         send(client, { type: 'token', sessionId, text: fallback });
         send(client, { type: 'done', sessionId });
 

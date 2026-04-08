@@ -87,8 +87,12 @@ const chunks = await splitter.createDocuments([rawText], [{ source, tenantId }])
 // Embedding
 const vectors = await embeddings.embedDocuments(chunks.map(c => c.pageContent));
 
-// Upsert to Qdrant (always batch)
-await this.qdrantService.upsertBatch(collection, chunks, vectors);
+// Add to Chroma (always batch — Chroma handles embedding internally)
+await this.chromaService.addDocuments(
+  chunks.map((c, i) => ({ text: c.pageContent, metadata: c.metadata })),
+  chunks.map((_, i) => `doc-${documentId}-chunk-${i}`),
+  collection,
+);
 ```
 
 ## LangSmith Run Saving (for correlating with DB messages)

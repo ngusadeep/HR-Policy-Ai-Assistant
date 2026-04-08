@@ -40,7 +40,7 @@ export class DocumentsController {
     private readonly usersService: UsersService,
   ) {}
 
-  @ApiOperation({ summary: 'Upload a policy document (PDF / TXT / MD) and ingest into Qdrant' })
+  @ApiOperation({ summary: 'Upload a policy document (PDF / TXT / MD) and ingest into Chroma' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -97,7 +97,7 @@ export class DocumentsController {
     return this.documentsService.findOne(id);
   }
 
-  @ApiOperation({ summary: 'Delete a document and remove its vectors from Qdrant' })
+  @ApiOperation({ summary: 'Delete a document and remove its vectors from Chroma' })
   @ApiResponse({ status: 200, description: 'Document deleted' })
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number): Promise<{ deleted: boolean }> {

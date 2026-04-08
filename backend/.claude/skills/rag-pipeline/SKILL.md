@@ -10,20 +10,20 @@ When retrieval quality is poor or the pipeline is slow/failing.
 3. If docs are relevant but answer is wrong → check prompt — is context properly injected?
 4. Add reranker: `RerankerService` with cross-encoder to reorder top-k before augmentation
 
-### Symptom: Qdrant returns 0 results
+### Symptom: Chroma returns 0 results
 ```typescript
-// Debug: log the raw scores
-const raw = await qdrantClient.search(collection, { vector, limit: 10, with_payload: true });
-console.log('Raw scores:', raw.map(r => r.score));
-// If all scores < threshold → lower threshold
-// If no results at all → check tenantId filter is correct
-// If collection empty → check ingestion completed (BullMQ job status)
+// Debug: log raw scores before threshold filtering
+const vector = await embeddingsService.embedQuery(query);
+const results = await chromaService.searchByVector(vector, 12, collection, 0); // threshold=0 to see all
+console.log('Raw scores:', results.map(r => r.score));
+// If all scores < RAG_SCORE_THRESHOLD → lower threshold in .env
+// If empty collection → check ingestion completed successfully
+// curl http://localhost:8000/api/v1/collections/hr_policies/count
 ```
 
-### Symptom: Same query, different results each time
-- Qdrant ANN search is approximate — this is expected for large collections
-- Enable `exact: true` for small collections (< 100k vectors) for deterministic results
-- Use `hnsw_config.ef` parameter for accuracy/speed tradeoff
+### Symptom: Same query, slightly different results each time
+- Chroma HNSW search is approximate — expected for large collections
+- For small collections (< 10k vectors) results should be deterministic
 
 ## Performance Tuning
 
@@ -60,7 +60,11 @@ export class IngestProcessor {
     for (let i = 0; i < allChunks.length; i += BATCH_SIZE) {
       const batch = allChunks.slice(i, i + BATCH_SIZE);
       const vectors = await this.embedding.embedDocuments(batch.map(c => c.text));
-      await this.qdrant.upsertBatch(collection, batch, vectors);
+      await this.chromaService.addDocuments(
+        batch.map((c, i) => ({ text: c.text, metadata: c.metadata })),
+        batch.map((c) => c.id),
+        collection,
+      );
       await job.progress(Math.round(((i + BATCH_SIZE) / allChunks.length) * 100));
     }
   }

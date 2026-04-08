@@ -63,11 +63,11 @@ export class DocumentsService {
     const doc = await this.documentRepository.findByIdWithUploader(id);
     if (!doc) throw new NotFoundException(`Document not found: ${id}`);
 
-    // Remove vectors from Qdrant
+    // Remove vectors from Chroma
     try {
       await this.ingestionService.deleteFromVectorStore(id, doc.collection);
     } catch (err) {
-      this.logger.warn(`Could not delete Qdrant vectors for doc ${id}:`, err);
+      this.logger.warn(`Could not delete Chroma vectors for doc ${id}:`, err);
     }
 
     // Remove file from disk

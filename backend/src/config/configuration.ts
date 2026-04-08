@@ -23,11 +23,10 @@ export default () => ({
     apiKey: process.env.OPENAI_API_KEY ?? '',
     embeddingModel: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
   },
-  qdrant: {
-    url: process.env.QDRANT_URL || 'http://localhost:6333',
-    collection: process.env.QDRANT_COLLECTION || 'hr_policies',
-    vectorSize: parseInt(process.env.QDRANT_VECTOR_SIZE ?? '1536', 10),
-    scoreThreshold: parseFloat(process.env.RAG_SCORE_THRESHOLD ?? '0.4'),
+  chroma: {
+    url: process.env.CHROMA_URL || 'http://localhost:8000',
+    collection: process.env.CHROMA_COLLECTION || 'hr_policies',
+    scoreThreshold: parseFloat(process.env.RAG_SCORE_THRESHOLD ?? '0.6'),
   },
   uploadsDir: process.env.UPLOADS_DIR || 'uploads',
   langsmith: {

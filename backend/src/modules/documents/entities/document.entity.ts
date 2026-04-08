@@ -35,7 +35,7 @@ export class Document {
   @Column()
   storedPath: string;
 
-  /** Qdrant collection the chunks were ingested into. */
+  /** Chroma collection the chunks were ingested into. */
   @Column({ default: 'hr_policies' })
   collection: string;
 
@@ -43,7 +43,7 @@ export class Document {
   @Column({ type: 'enum', enum: DocumentStatus, default: DocumentStatus.PROCESSING })
   status: DocumentStatus;
 
-  /** Number of chunks ingested into Qdrant (0 while processing). */
+  /** Number of chunks ingested into Chroma (0 while processing). */
   @Column({ default: 0 })
   chunkCount: number;
 

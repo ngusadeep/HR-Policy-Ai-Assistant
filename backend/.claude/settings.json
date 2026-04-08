@@ -40,11 +40,10 @@
       "Write(src/modules/guardrails/**)"
     ],
     "guardrails_reminders": [
-      "Always call InputGuard.validate() before any LLM or Qdrant call",
-      "Always filter Qdrant search by tenantId from JWT — never from user input",
+      "Always call InputGuard.validate() before any LLM or Chroma call",
       "Always wrap context in <context>...</context> XML delimiters",
       "Always run ResponseFilter.scrubOutput() before persisting to DB",
-      "Never return raw error messages, stack traces, or Qdrant IDs to clients",
+      "Never return raw error messages or stack traces to clients",
       "Never interpolate dto.query directly into a prompt string",
       "Always handle the zero-docs retrieval case before calling the LLM"
     ]

@@ -65,16 +65,14 @@ async handleChat() {}
 ## JSDoc for Services
 ```typescript
 /**
- * Performs vector similarity search against Qdrant for the given query.
- * Always filters by tenantId to prevent cross-tenant document leakage.
+ * Performs vector similarity search against Chroma for the given query.
  *
- * @param query - Raw user query string (will be embedded internally)
- * @param tenantId - Tenant identifier for Qdrant metadata filter
- * @param options - { topK: number of results (default 4), scoreThreshold: min similarity }
+ * @param query - Raw user query string (embedded by EmbeddingsService before search)
+ * @param options - { topK: number of results (default 6), scoreThreshold: min cosine similarity }
  * @returns Array of ranked DocumentChunk objects with text and metadata
- * @throws QdrantConnectionError if vector DB is unreachable
+ * @throws Error if Chroma server is unreachable
  */
-async retrieve(query: string, tenantId: string, options?: RetrieveOptions): Promise<DocumentChunk[]>
+async retrieve(query: string, options?: RetrieveOptions): Promise<DocumentChunk[]>
 ```
 
 ## README Sections to Maintain
