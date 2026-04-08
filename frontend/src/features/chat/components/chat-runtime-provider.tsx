@@ -46,14 +46,17 @@ export function ChatRuntimeProvider({
   children,
   streamChat,
   onMessagesChange,
+  initialMessages = [],
 }: Readonly<{
   children: ReactNode
   streamChat: ChatStreamFn
   /** Called whenever messages change (so parent can show current chat in history). */
   onMessagesChange?: (messages: MyMessage[]) => void
+  /** Pre-load messages (e.g. from a resumed historical session). */
+  initialMessages?: MyMessage[]
 }>) {
   const [isRunning, setIsRunning] = useState(false)
-  const [messages, setMessages] = useState<MyMessage[]>([])
+  const [messages, setMessages] = useState<MyMessage[]>(initialMessages)
 
   useEffect(() => {
     onMessagesChange?.(messages)

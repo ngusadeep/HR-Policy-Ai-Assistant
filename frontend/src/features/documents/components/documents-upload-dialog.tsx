@@ -29,7 +29,11 @@ export function DocumentsUploadDialog({ open, onOpenChange }: DocumentsUploadDia
   const uploadMutation = useMutation({
     mutationFn: (f: File) => uploadDocument(f),
     onSuccess: (doc) => {
-      toast.success(`"${doc.originalName}" uploaded. Indexing in background…`)
+      const msg =
+        doc.status === 'indexed'
+          ? `"${doc.originalName}" indexed — ${doc.chunkCount} chunks ready.`
+          : `"${doc.originalName}" uploaded. Indexing in background — the status will update automatically.`
+      toast.success(msg)
       queryClient.invalidateQueries({ queryKey: ['documents'] })
       setFile(null)
       onOpenChange(false)
@@ -86,7 +90,7 @@ export function DocumentsUploadDialog({ open, onOpenChange }: DocumentsUploadDia
             {file ? (
               <div className='flex items-center gap-2 text-sm'>
                 <FileText className='h-5 w-5 text-primary' />
-                <span className='max-w-[200px] truncate font-medium'>{file.name}</span>
+                <span className='max-w-50 truncate font-medium'>{file.name}</span>
                 <button
                   type='button'
                   onClick={(e) => { e.stopPropagation(); setFile(null) }}

@@ -31,6 +31,7 @@ import { Route as ClerkauthSignUpRouteImport } from './routes/clerk/(auth)/sign-
 import { Route as ClerkauthSignInRouteImport } from './routes/clerk/(auth)/sign-in'
 import { Route as AuthenticatedDashboardSettingsRouteRouteImport } from './routes/_authenticated/dashboard/settings/route'
 import { Route as AuthenticatedDashboardUsersIndexRouteImport } from './routes/_authenticated/dashboard/users/index'
+import { Route as AuthenticatedDashboardRolesIndexRouteImport } from './routes/_authenticated/dashboard/roles/index'
 import { Route as AuthenticatedDashboardTasksIndexRouteImport } from './routes/_authenticated/dashboard/tasks/index'
 import { Route as AuthenticatedDashboardSettingsIndexRouteImport } from './routes/_authenticated/dashboard/settings/index'
 import { Route as AuthenticatedDashboardHelpCenterIndexRouteImport } from './routes/_authenticated/dashboard/help-center/index'
@@ -152,6 +153,12 @@ const AuthenticatedDashboardUsersIndexRoute =
     path: '/users/',
     getParentRoute: () => AuthenticatedDashboardRouteRoute,
   } as any)
+const AuthenticatedDashboardRolesIndexRoute =
+  AuthenticatedDashboardRolesIndexRouteImport.update({
+    id: '/roles/',
+    path: '/roles/',
+    getParentRoute: () => AuthenticatedDashboardRouteRoute,
+  } as any)
 const AuthenticatedDashboardTasksIndexRoute =
   AuthenticatedDashboardTasksIndexRouteImport.update({
     id: '/tasks/',
@@ -229,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/': typeof AuthenticatedDashboardSettingsIndexRoute
   '/dashboard/tasks': typeof AuthenticatedDashboardTasksIndexRoute
   '/dashboard/users': typeof AuthenticatedDashboardUsersIndexRoute
+  '/dashboard/roles': typeof AuthenticatedDashboardRolesIndexRoute
 }
 export interface FileRoutesByTo {
   '/clerk': typeof ClerkAuthenticatedRouteRouteWithChildren
@@ -256,6 +264,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsIndexRoute
   '/dashboard/tasks': typeof AuthenticatedDashboardTasksIndexRoute
   '/dashboard/users': typeof AuthenticatedDashboardUsersIndexRoute
+  '/dashboard/roles': typeof AuthenticatedDashboardRolesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -289,6 +298,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/settings/': typeof AuthenticatedDashboardSettingsIndexRoute
   '/_authenticated/dashboard/tasks/': typeof AuthenticatedDashboardTasksIndexRoute
   '/_authenticated/dashboard/users/': typeof AuthenticatedDashboardUsersIndexRoute
+  '/_authenticated/dashboard/roles/': typeof AuthenticatedDashboardRolesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -320,6 +330,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/'
     | '/dashboard/tasks'
     | '/dashboard/users'
+    | '/dashboard/roles'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/clerk'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/tasks'
     | '/dashboard/users'
+    | '/dashboard/roles'
   id:
     | '__root__'
     | '/_authenticated'
@@ -379,6 +391,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/settings/'
     | '/_authenticated/dashboard/tasks/'
     | '/_authenticated/dashboard/users/'
+    | '/_authenticated/dashboard/roles/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -552,6 +565,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardUsersIndexRouteImport
       parentRoute: typeof AuthenticatedDashboardRouteRoute
     }
+    '/_authenticated/dashboard/roles/': {
+      id: '/_authenticated/dashboard/roles/'
+      path: '/roles'
+      fullPath: '/dashboard/roles'
+      preLoaderRoute: typeof AuthenticatedDashboardRolesIndexRouteImport
+      parentRoute: typeof AuthenticatedDashboardRouteRoute
+    }
     '/_authenticated/dashboard/tasks/': {
       id: '/_authenticated/dashboard/tasks/'
       path: '/tasks'
@@ -641,6 +661,7 @@ interface AuthenticatedDashboardRouteRouteChildren {
   AuthenticatedDashboardHelpCenterIndexRoute: typeof AuthenticatedDashboardHelpCenterIndexRoute
   AuthenticatedDashboardTasksIndexRoute: typeof AuthenticatedDashboardTasksIndexRoute
   AuthenticatedDashboardUsersIndexRoute: typeof AuthenticatedDashboardUsersIndexRoute
+  AuthenticatedDashboardRolesIndexRoute: typeof AuthenticatedDashboardRolesIndexRoute
 }
 
 const AuthenticatedDashboardRouteRouteChildren: AuthenticatedDashboardRouteRouteChildren =
@@ -659,6 +680,8 @@ const AuthenticatedDashboardRouteRouteChildren: AuthenticatedDashboardRouteRoute
       AuthenticatedDashboardTasksIndexRoute,
     AuthenticatedDashboardUsersIndexRoute:
       AuthenticatedDashboardUsersIndexRoute,
+    AuthenticatedDashboardRolesIndexRoute:
+      AuthenticatedDashboardRolesIndexRoute,
   }
 
 const AuthenticatedDashboardRouteRouteWithChildren =

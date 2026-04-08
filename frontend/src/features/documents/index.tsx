@@ -21,6 +21,12 @@ export function Documents() {
   const { data: documents = [], isLoading, isError } = useQuery({
     queryKey: ['documents'],
     queryFn: fetchDocuments,
+    // Auto-refresh every 3s while any document is still being indexed
+    refetchInterval: (query) => {
+      const docs = query.state.data
+      if (!docs) return false
+      return docs.some((d) => d.status === 'processing') ? 3000 : false
+    },
   })
 
   return (

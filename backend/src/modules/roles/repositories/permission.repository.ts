@@ -19,7 +19,7 @@ export class PermissionRepository extends BaseRepository<Permission> {
 
   findByNames(names: string[]): Promise<Permission[]> {
     if (!names.length) {
-      return [];
+      return Promise.resolve([]);
     }
 
     return this.permissionRepository.find({

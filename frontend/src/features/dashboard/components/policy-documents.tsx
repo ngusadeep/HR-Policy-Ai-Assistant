@@ -1,75 +1,8 @@
 import { FileText, FileCheck, FileClock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-
-type DocStatus = 'indexed' | 'processing' | 'failed'
-
-interface PolicyDocument {
-  id: string
-  name: string
-  category: string
-  uploadedBy: string
-  uploadedAt: string
-  pages: number
-  status: DocStatus
-}
-
-const documents: PolicyDocument[] = [
-  {
-    id: '1',
-    name: 'Employee Leave Policy 2024',
-    category: 'Leave',
-    uploadedBy: 'HR Admin',
-    uploadedAt: 'Today, 09:14',
-    pages: 12,
-    status: 'indexed',
-  },
-  {
-    id: '2',
-    name: 'Code of Conduct & Ethics',
-    category: 'Conduct',
-    uploadedBy: 'HR Admin',
-    uploadedAt: 'Today, 08:45',
-    pages: 28,
-    status: 'indexed',
-  },
-  {
-    id: '3',
-    name: 'Health & Safety Handbook',
-    category: 'Safety',
-    uploadedBy: 'Jane Waweru',
-    uploadedAt: 'Yesterday, 15:30',
-    pages: 44,
-    status: 'processing',
-  },
-  {
-    id: '4',
-    name: 'Recruitment & Selection Policy',
-    category: 'Recruitment',
-    uploadedBy: 'HR Admin',
-    uploadedAt: 'Yesterday, 11:00',
-    pages: 18,
-    status: 'indexed',
-  },
-  {
-    id: '5',
-    name: 'Employee Benefits Guide 2024',
-    category: 'Benefits',
-    uploadedBy: 'James Maina',
-    uploadedAt: '2 days ago',
-    pages: 35,
-    status: 'indexed',
-  },
-  {
-    id: '6',
-    name: 'Performance Management Framework',
-    category: 'Performance',
-    uploadedBy: 'HR Admin',
-    uploadedAt: '3 days ago',
-    pages: 22,
-    status: 'failed',
-  },
-]
+import type { DocStatus } from '@/features/documents/data/schema'
+import type { RecentDocumentItem } from '../api/dashboard-api'
 
 const statusConfig: Record<DocStatus, { label: string; Icon: typeof FileCheck; iconClass: string; badgeClass: string }> = {
   indexed: {
@@ -92,11 +25,36 @@ const statusConfig: Record<DocStatus, { label: string; Icon: typeof FileCheck; i
   },
 }
 
-export function PolicyDocuments() {
+function formatRelative(isoDate: string): string {
+  const diff = Date.now() - new Date(isoDate).getTime()
+  const mins = Math.floor(diff / 60_000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins} min ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs} hr ago`
+  const days = Math.floor(hrs / 24)
+  if (days === 1) return 'Yesterday'
+  return `${days} days ago`
+}
+
+interface PolicyDocumentsProps {
+  documents: RecentDocumentItem[]
+}
+
+export function PolicyDocuments({ documents }: PolicyDocumentsProps) {
+  if (documents.length === 0) {
+    return (
+      <p className='py-4 text-center text-sm text-muted-foreground'>
+        No documents uploaded yet.
+      </p>
+    )
+  }
+
   return (
     <div className='space-y-3'>
       {documents.map((doc) => {
-        const { label, Icon, iconClass, badgeClass } = statusConfig[doc.status]
+        const cfg = statusConfig[doc.status] ?? statusConfig.failed
+        const { label, Icon, iconClass, badgeClass } = cfg
         return (
           <div key={doc.id} className='flex items-center gap-3'>
             <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-muted/50'>
@@ -117,12 +75,14 @@ export function PolicyDocuments() {
                 </span>
               </div>
               <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                <Badge variant='outline' className='px-1.5 py-0 text-xs font-normal'>
-                  {doc.category}
-                </Badge>
-                <span>{doc.pages} pages</span>
+                {doc.chunkCount > 0 && (
+                  <Badge variant='outline' className='px-1.5 py-0 text-xs font-normal'>
+                    {doc.chunkCount} chunks
+                  </Badge>
+                )}
+                {doc.uploadedBy && <span>{doc.uploadedBy}</span>}
                 <span>·</span>
-                <span>{doc.uploadedAt}</span>
+                <span>{formatRelative(doc.uploadedAt)}</span>
               </div>
             </div>
           </div>

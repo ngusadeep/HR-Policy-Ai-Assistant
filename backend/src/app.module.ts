@@ -12,6 +12,7 @@ import { LoggerModule } from 'src/lib/logger/logger.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ResponseTransformInterceptor } from 'src/common/interceptors/response.interceptor';
 import { LoggingInterceptor } from 'src/common/interceptors/logging.interceptor';
 import { TimeoutInterceptor } from 'src/common/interceptors/timeout.interceptor';
@@ -41,6 +42,7 @@ import { HttpExceptionFilter } from 'src/common/filters/http-exception.filter';
     AuthModule,
     DocumentsModule,
     ChatModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [

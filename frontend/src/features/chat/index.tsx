@@ -14,6 +14,7 @@ import {
   type MyMessage,
 } from './components/chat-runtime-provider'
 import { wsChatStream } from './api/chat-ws'
+import { fetchChatSessions, fetchSessionMessages } from './api/chat-api'
 import { ChatSidebar } from './components/chat-sidebar'
 import { Thread } from './components/thread'
 
@@ -53,43 +54,70 @@ export function Chat() {
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [searchOpen, setSearchOpen] = useState(false)
+
+  // threadKey forces a full remount of ChatRuntimeProvider when switching threads
   const [threadKey, setThreadKey] = useState(0)
   const [currentMessages, setCurrentMessages] = useState<MyMessage[]>([])
-  const [historyItems, setHistoryItems] = useState<ChatHistoryItem[]>([])
+  const [initialMessages, setInitialMessages] = useState<MyMessage[]>([])
+  const [activeSessionId, setActiveSessionId] = useState<string | undefined>()
+
+  // Persisted sessions loaded from the backend
+  const [persistedSessions, setPersistedSessions] = useState<ChatHistoryItem[]>([])
 
   useEffect(() => {
     if (isMobile) setSidebarOpen(false)
   }, [isMobile])
+
+  // Load session list from backend on mount
+  useEffect(() => {
+    fetchChatSessions()
+      .then(setPersistedSessions)
+      .catch(() => {/* silently ignore if not authenticated yet */})
+  }, [])
 
   const onMessagesChange = useCallback((messages: MyMessage[]) => {
     setCurrentMessages(messages)
   }, [])
 
   const startNewThread = useCallback(() => {
-    if (currentMessages.length > 0) {
-      const { title, preview } = getThreadSummary(currentMessages)
-      setHistoryItems((prev) => [
-        {
-          id: `thread-${threadKey}-${Date.now()}`,
-          title,
-          preview,
-          updatedAt: new Date(),
-        },
-        ...prev,
-      ])
-    }
+    setActiveSessionId(undefined)
+    setInitialMessages([])
     setThreadKey((k) => k + 1)
     if (isMobile) setSidebarOpen(false)
-  }, [currentMessages, threadKey, isMobile])
+  }, [isMobile])
 
+  const handleSelectSession = useCallback(async (item: ChatHistoryItem) => {
+    if (item.id === activeSessionId) return
+    try {
+      const messages = await fetchSessionMessages(item.id)
+      setActiveSessionId(item.id)
+      setInitialMessages(messages)
+      setThreadKey((k) => k + 1)
+      if (isMobile) setSidebarOpen(false)
+    } catch {
+      // If fetching fails, just start fresh
+      startNewThread()
+    }
+  }, [activeSessionId, isMobile, startNewThread])
+
+  // The sidebar list: current active thread (if it has messages) + persisted sessions
   const sidebarItems = useMemo((): ChatHistoryItem[] => {
-    if (currentMessages.length === 0) return historyItems
-    const { title, preview } = getThreadSummary(currentMessages)
+    // Build an entry for the active unsaved thread (messages not yet in backend)
+    const activeEntry: ChatHistoryItem | null =
+      currentMessages.length > 0 && !activeSessionId
+        ? (() => {
+            const { title, preview } = getThreadSummary(currentMessages)
+            return { id: 'current', title, preview, updatedAt: new Date() }
+          })()
+        : null
+
+    const persisted = persistedSessions.filter((s) => s.id !== activeSessionId)
+
     return [
-      { id: 'current', title, preview, updatedAt: new Date() },
-      ...historyItems,
+      ...(activeEntry ? [activeEntry] : []),
+      ...persisted,
     ]
-  }, [currentMessages, historyItems])
+  }, [currentMessages, activeSessionId, persistedSessions])
 
   return (
     <div className='flex h-dvh bg-background'>
@@ -110,6 +138,8 @@ export function Chat() {
         open={sidebarOpen}
         overlay={isMobile}
         items={sidebarItems}
+        activeId={activeSessionId ?? (currentMessages.length > 0 ? 'current' : undefined)}
+        onSelect={handleSelectSession}
       />
 
       <div className='flex min-w-0 flex-1 flex-col min-h-0'>
@@ -153,6 +183,7 @@ export function Chat() {
             key={threadKey}
             streamChat={wsChatStream}
             onMessagesChange={onMessagesChange}
+            initialMessages={initialMessages}
           >
             <ThreadWithSuggestions />
           </ChatRuntimeProvider>

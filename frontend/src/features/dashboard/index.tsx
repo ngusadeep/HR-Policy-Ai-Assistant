@@ -1,12 +1,11 @@
+import { useEffect, useState } from 'react'
 import {
   BookOpen,
   MessageSquareText,
   Users,
-  TriangleAlert,
-  TrendingUp,
-  TrendingDown,
   Upload,
   MessagesSquare,
+  Loader2,
 } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
@@ -27,43 +26,41 @@ import { QueriesChart } from './components/queries-chart'
 import { TopicsChart } from './components/topics-chart'
 import { RecentQueries } from './components/recent-queries'
 import { PolicyDocuments } from './components/policy-documents'
-
-const stats = [
-  {
-    title: 'Policy Documents',
-    value: '47',
-    change: '+3 this week',
-    trend: 'up',
-    icon: BookOpen,
-    description: 'Indexed in knowledge base',
-  },
-  {
-    title: 'Queries This Month',
-    value: '892',
-    change: '+16.8% vs last month',
-    trend: 'up',
-    icon: MessageSquareText,
-    description: 'Employee AI interactions',
-  },
-  {
-    title: 'Active Users',
-    value: '134',
-    change: '+12 since last month',
-    trend: 'up',
-    icon: Users,
-    description: 'Employees using the assistant',
-  },
-  {
-    title: 'Escalated Queries',
-    value: '18',
-    change: '+5 this week',
-    trend: 'down',
-    icon: TriangleAlert,
-    description: 'Require HR team review',
-  },
-]
+import { fetchDashboardStats, type DashboardStats } from './api/dashboard-api'
 
 export function Dashboard() {
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchDashboardStats()
+      .then(setStats)
+      .finally(() => setLoading(false))
+  }, [])
+
+  const kpiCards = stats
+    ? [
+        {
+          title: 'Policy Documents',
+          value: stats.documentCount,
+          sub: `${stats.indexedDocumentCount} indexed`,
+          icon: BookOpen,
+        },
+        {
+          title: 'Queries This Month',
+          value: stats.queryThisMonth,
+          sub: 'Employee AI interactions',
+          icon: MessageSquareText,
+        },
+        {
+          title: 'Active Users',
+          value: stats.activeUserCount,
+          sub: 'Employees with active accounts',
+          icon: Users,
+        },
+      ]
+    : []
+
   return (
     <>
       <Header>
@@ -90,46 +87,46 @@ export function Dashboard() {
                 Open Chat
               </Link>
             </Button>
-            <Button>
-              <Upload className='mr-2 h-4 w-4' />
-              Upload Policy
+            <Button asChild>
+              <Link to='/dashboard/documents'>
+                <Upload className='mr-2 h-4 w-4' />
+                Upload Policy
+              </Link>
             </Button>
           </div>
         </div>
 
         {/* KPI stat cards */}
-        <div className='mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-          {stats.map((stat) => {
-            const Icon = stat.icon
-            const TrendIcon = stat.trend === 'up' ? TrendingUp : TrendingDown
-            const trendColor =
-              stat.trend === 'up'
-                ? stat.title === 'Escalated Queries'
-                  ? 'text-red-500'
-                  : 'text-green-500'
-                : 'text-red-500'
-
-            return (
-              <Card key={stat.title}>
-                <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                  <CardTitle className='text-sm font-medium'>{stat.title}</CardTitle>
-                  <div className='flex h-8 w-8 items-center justify-center rounded-md bg-muted'>
-                    <Icon className='h-4 w-4 text-muted-foreground' />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className='text-3xl font-bold'>{stat.value}</div>
-                  <div className={`mt-1 flex items-center gap-1 text-xs ${trendColor}`}>
-                    <TrendIcon className='h-3 w-3' />
-                    <span>{stat.change}</span>
-                  </div>
-                  <p className='mt-0.5 text-xs text-muted-foreground'>
-                    {stat.description}
-                  </p>
-                </CardContent>
-              </Card>
-            )
-          })}
+        <div className='mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          {loading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i}>
+                  <CardHeader className='pb-2'>
+                    <div className='h-4 w-32 animate-pulse rounded bg-muted' />
+                  </CardHeader>
+                  <CardContent>
+                    <div className='h-8 w-16 animate-pulse rounded bg-muted' />
+                    <div className='mt-2 h-3 w-24 animate-pulse rounded bg-muted' />
+                  </CardContent>
+                </Card>
+              ))
+            : kpiCards.map((card) => {
+                const Icon = card.icon
+                return (
+                  <Card key={card.title}>
+                    <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+                      <CardTitle className='text-sm font-medium'>{card.title}</CardTitle>
+                      <div className='flex h-8 w-8 items-center justify-center rounded-md bg-muted'>
+                        <Icon className='h-4 w-4 text-muted-foreground' />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className='text-3xl font-bold'>{card.value}</div>
+                      <p className='mt-0.5 text-xs text-muted-foreground'>{card.sub}</p>
+                    </CardContent>
+                  </Card>
+                )
+              })}
         </div>
 
         {/* Charts + lists */}
@@ -160,11 +157,17 @@ export function Dashboard() {
                 <CardHeader>
                   <CardTitle>Recent Queries</CardTitle>
                   <CardDescription>
-                    Latest employee questions and their status
+                    Latest questions sent to the AI assistant
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <RecentQueries />
+                  {loading ? (
+                    <div className='flex items-center justify-center py-8'>
+                      <Loader2 className='h-5 w-5 animate-spin text-muted-foreground' />
+                    </div>
+                  ) : (
+                    <RecentQueries queries={stats?.recentQueries ?? []} />
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -177,12 +180,18 @@ export function Dashboard() {
                     <CardTitle>Policy Documents</CardTitle>
                     <CardDescription>Recently uploaded to the knowledge base</CardDescription>
                   </div>
-                  <Button variant='outline' size='sm'>
-                    Manage
+                  <Button variant='outline' size='sm' asChild>
+                    <Link to='/dashboard/documents'>Manage</Link>
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <PolicyDocuments />
+                  {loading ? (
+                    <div className='flex items-center justify-center py-8'>
+                      <Loader2 className='h-5 w-5 animate-spin text-muted-foreground' />
+                    </div>
+                  ) : (
+                    <PolicyDocuments documents={stats?.recentDocuments ?? []} />
+                  )}
                 </CardContent>
               </Card>
 

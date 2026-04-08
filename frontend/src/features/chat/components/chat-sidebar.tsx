@@ -12,6 +12,8 @@ type ChatSidebarProps = {
   open: boolean
   overlay?: boolean
   items?: ChatHistoryItem[]
+  activeId?: string
+  onSelect?: (item: ChatHistoryItem) => void
   className?: string
 }
 
@@ -19,6 +21,8 @@ export function ChatSidebar({
   open,
   overlay = false,
   items = [],
+  activeId,
+  onSelect,
   className,
 }: ChatSidebarProps) {
   const { auth } = useAuthStore()
@@ -64,7 +68,11 @@ export function ChatSidebar({
                   <li key={item.id}>
                     <button
                       type='button'
-                      className='w-full rounded-md px-2 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none'
+                      onClick={() => onSelect?.(item)}
+                      className={cn(
+                        'w-full rounded-md px-2 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none',
+                        activeId === item.id && 'bg-accent text-accent-foreground'
+                      )}
                     >
                       <span className='block truncate font-medium'>{item.title}</span>
                       {item.preview && (
